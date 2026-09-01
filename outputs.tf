@@ -78,3 +78,7 @@ output "hml_target_group_arn" {
 output "prod_target_group_arn" {
   value = aws_lb_target_group.environment["prod"].arn
 }
+
+output "github_deploy_role_arns" {
+  value = { for key, role in aws_iam_role.github_deploy : key => role.arn }
+}
