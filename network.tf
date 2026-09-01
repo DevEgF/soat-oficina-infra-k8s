@@ -1,0 +1,60 @@
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+module "vpc" {
+  #checkov:skip=CKV_TF_1: The approved design pins the Terraform Registry module to the exact 6.6.1 release.
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.6.1"
+
+  name                    = "${local.project}-vpc"
+  cidr                    = "10.20.0.0/16"
+  azs                     = slice(data.aws_availability_zones.available.names, 0, 2)
+  public_subnets          = ["10.20.0.0/24", "10.20.1.0/24"]
+  private_subnets         = ["10.20.10.0/24", "10.20.11.0/24"]
+  enable_nat_gateway      = false
+  map_public_ip_on_launch = true
+  public_subnet_tags      = { "kubernetes.io/role/elb" = "1" }
+  private_subnet_tags     = { "kubernetes.io/role/internal-elb" = "1" }
+  tags                    = local.common_tags
+}
+
+resource "aws_security_group" "lambda" {
+  #checkov:skip=CKV2_AWS_5: This shared security group is exported for Lambda ENIs created by the auth repository.
+  name        = "${local.project}-lambda"
+  description = "Outbound access for private Lambda functions"
+  vpc_id      = module.vpc.vpc_id
+
+  #checkov:skip=CKV_AWS_382: Private Lambda subnets have no NAT or internet route; destination security groups still restrict RDS and endpoint access.
+  egress {
+    description = "Allow private Lambda functions to reach approved VPC destinations"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "secrets_endpoint" {
+  name        = "${local.project}-secrets-endpoint"
+  description = "HTTPS access to the private Secrets Manager endpoint"
+  vpc_id      = module.vpc.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "secrets_from_lambda" {
+  security_group_id            = aws_security_group.secrets_endpoint.id
+  referenced_security_group_id = aws_security_group.lambda.id
+  description                  = "Allow HTTPS from private Lambda functions"
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  private_dns_enabled = true
+  security_group_ids  = [aws_security_group.secrets_endpoint.id]
+}

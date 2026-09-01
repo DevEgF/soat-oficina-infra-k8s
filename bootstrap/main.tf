@@ -5,6 +5,11 @@ locals {
 }
 
 resource "aws_s3_bucket" "state" {
+  #checkov:skip=CKV_AWS_18: A separate access-log bucket is outside the approved short-lived academic design.
+  #checkov:skip=CKV_AWS_144: The approved architecture is single-region in us-east-1 and does not replicate state cross-region.
+  #checkov:skip=CKV_AWS_145: The approved bootstrap contract requires S3-managed AES256 encryption.
+  #checkov:skip=CKV2_AWS_61: State versions are retained without automated expiration for recovery throughout Phase 3.
+  #checkov:skip=CKV2_AWS_62: State object event notifications are outside the approved bootstrap contract.
   bucket = local.bucket_name
 
   lifecycle {
