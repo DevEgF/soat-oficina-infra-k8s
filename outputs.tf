@@ -82,3 +82,11 @@ output "prod_target_group_arn" {
 output "github_deploy_role_arns" {
   value = { for key, role in aws_iam_role.github_deploy : key => role.arn }
 }
+
+output "budget_name" {
+  value = aws_budgets_budget.project.name
+}
+
+output "alerts_topic_arn" {
+  value = aws_sns_topic.alerts.arn
+}
