@@ -54,3 +54,27 @@ output "jwt_secret_arn" {
 output "app_pod_identity_role_name" {
   value = aws_iam_role.app_pod.name
 }
+
+output "nlb_arn" {
+  value = aws_lb.internal.arn
+}
+
+output "nlb_dns_name" {
+  value = aws_lb.internal.dns_name
+}
+
+output "hml_listener_arn" {
+  value = aws_lb_listener.environment["hml"].arn
+}
+
+output "prod_listener_arn" {
+  value = aws_lb_listener.environment["prod"].arn
+}
+
+output "hml_target_group_arn" {
+  value = aws_lb_target_group.environment["hml"].arn
+}
+
+output "prod_target_group_arn" {
+  value = aws_lb_target_group.environment["prod"].arn
+}

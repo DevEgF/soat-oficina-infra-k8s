@@ -41,6 +41,34 @@ resource "aws_security_group" "secrets_endpoint" {
   vpc_id      = module.vpc.vpc_id
 }
 
+resource "aws_security_group" "nlb" {
+  name        = "${local.project}-nlb"
+  description = "Restricted traffic for the shared internal NLB"
+  vpc_id      = module.vpc.vpc_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "nlb_to_nodes" {
+  for_each = local.routing
+
+  security_group_id            = aws_security_group.nlb.id
+  referenced_security_group_id = module.eks.node_security_group_id
+  description                  = "Forward ${each.key} traffic to its NodePort"
+  from_port                    = each.value.node_port
+  to_port                      = each.value.node_port
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "nodes_from_nlb" {
+  for_each = local.routing
+
+  security_group_id            = module.eks.node_security_group_id
+  referenced_security_group_id = aws_security_group.nlb.id
+  description                  = "Accept ${each.key} traffic only from the internal NLB"
+  from_port                    = each.value.node_port
+  to_port                      = each.value.node_port
+  ip_protocol                  = "tcp"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "secrets_from_lambda" {
   security_group_id            = aws_security_group.secrets_endpoint.id
   referenced_security_group_id = aws_security_group.lambda.id
