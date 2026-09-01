@@ -50,6 +50,15 @@ resource "aws_vpc_security_group_ingress_rule" "secrets_from_lambda" {
   ip_protocol                  = "tcp"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "secrets_from_nodes" {
+  security_group_id            = aws_security_group.secrets_endpoint.id
+  referenced_security_group_id = module.eks.node_security_group_id
+  description                  = "Allow HTTPS from EKS nodes"
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
 resource "aws_vpc_endpoint" "secretsmanager" {
   vpc_id              = module.vpc.vpc_id
   service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"

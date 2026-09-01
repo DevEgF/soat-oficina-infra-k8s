@@ -29,3 +29,15 @@ output "private_subnet_ids" {
 output "lambda_security_group_id" {
   value = aws_security_group.lambda.id
 }
+
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "node_security_group_id" {
+  value = module.eks.node_security_group_id
+}
+
+output "node_autoscaling_group_names" {
+  value = module.eks.eks_managed_node_groups_autoscaling_group_names
+}

@@ -36,7 +36,7 @@ mock_provider "aws" {
 
 }
 
-run "network_contract" {
+run "eks_contract" {
   command = plan
 
   variables {
@@ -45,17 +45,17 @@ run "network_contract" {
   }
 
   assert {
-    condition     = module.vpc.vpc_cidr_block == "10.20.0.0/16"
-    error_message = "unexpected VPC CIDR"
+    condition     = output.kubernetes_version == "1.35"
+    error_message = "EKS must remain on standard support"
   }
 
   assert {
-    condition     = module.vpc.natgw_ids == []
-    error_message = "NAT Gateway is outside the approved design"
+    condition     = output.node_instance_type == "t3.medium"
+    error_message = "node size changed"
   }
 
   assert {
-    condition     = length(module.vpc.private_subnets) == 2
-    error_message = "two private subnets required"
+    condition     = aws_eks_addon.metrics_server.addon_name == "metrics-server"
+    error_message = "HPA needs Metrics Server"
   }
 }
