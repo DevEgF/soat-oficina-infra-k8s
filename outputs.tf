@@ -41,3 +41,16 @@ output "node_security_group_id" {
 output "node_autoscaling_group_names" {
   value = module.eks.eks_managed_node_groups_autoscaling_group_names
 }
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.app.repository_url
+}
+
+output "jwt_secret_arn" {
+  value     = aws_secretsmanager_secret.jwt.arn
+  sensitive = true
+}
+
+output "app_pod_identity_role_name" {
+  value = aws_iam_role.app_pod.name
+}
