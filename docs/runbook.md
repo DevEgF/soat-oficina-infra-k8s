@@ -10,6 +10,20 @@
 Never retrieve a secret value for deployment or verification. Only secret ARNs
 are Terraform outputs.
 
+## Free account plan compatibility
+
+The AWS account uses the active Free account plan. AWS rejected the approved
+`t3.medium` node because it is not Free Tier eligible, so the implementation
+uses `c7i-flex.large`, which preserves 2 vCPU and 4 GiB. Usage consumes account
+credits and must be destroyed after the delivery window.
+
+Confirm the plan and remaining credits before every apply:
+
+```powershell
+aws freetier get-account-plan-state --region us-east-1 --profile oficina-admin
+python scripts/aws-cost-estimate.py
+```
+
 ## Initial bootstrap and foundation apply
 
 Run the bootstrap once and apply only its saved plan:

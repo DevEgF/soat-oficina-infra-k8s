@@ -9,24 +9,26 @@ from decimal import Decimal, ROUND_HALF_UP
 
 
 EKS_CONTROL_PLANE_HOURLY = Decimal("0.1000")
-EC2_T3_MEDIUM_HOURLY = Decimal("0.0416")
+EC2_C7I_FLEX_LARGE_HOURLY = Decimal("0.08479")
 RDS_DB_T4G_MICRO_HOURLY = Decimal("0.0160")
 NLB_HOURLY = Decimal("0.0225")
 PUBLIC_IPV4_HOURLY = Decimal("0.0050")
+SECRETS_MANAGER_ENDPOINT_HOURLY = Decimal("0.0200")
 PLANNING_RESERVE_HOURLY = Decimal("0.0100")
 
 HOURLY_COSTS = {
     "eks_control_plane": EKS_CONTROL_PLANE_HOURLY,
-    "ec2_t3_medium_node": EC2_T3_MEDIUM_HOURLY,
+    "ec2_c7i_flex_large_node": EC2_C7I_FLEX_LARGE_HOURLY,
     "rds_db_t4g_micro": RDS_DB_T4G_MICRO_HOURLY,
     "network_load_balancer": NLB_HOURLY,
     "public_ipv4": PUBLIC_IPV4_HOURLY,
+    "secrets_manager_endpoint_two_azs": SECRETS_MANAGER_ENDPOINT_HOURLY,
     "planning_reserve": PLANNING_RESERVE_HOURLY,
 }
 WINDOWS = (4, 8, 24, 40, 730)
 VARIABLE_COST_NOTE = (
-    "Data processing, PrivateLink endpoint AZ-hours, EBS/RDS storage, logs, "
-    "NLCUs, backups and taxes vary and require review before apply."
+    "Data processing, EBS/RDS storage, logs, NLCUs, secrets, backups and taxes "
+    "vary and require review before apply. Free plan usage consumes credits."
 )
 
 

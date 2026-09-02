@@ -4,6 +4,10 @@ Shared AWS foundation for FIAP SOAT Phase 3: a two-AZ VPC, EKS, immutable ECR,
 EKS Pod Identity, one internal NLB, GitHub OIDC roles, observability, and cost
 guardrails for the `hml` and `prod` namespaces.
 
+The active AWS Free account plan rejects the originally approved `t3.medium`.
+The node group therefore uses the Free-Tier-eligible `c7i-flex.large`, preserving
+the same 2 vCPU and 4 GiB capacity while consuming account credits.
+
 ## Integration contract
 
 The canonical cross-repository contract is maintained in
@@ -73,11 +77,12 @@ terraform show destroy.tfplan
 terraform apply destroy.tfplan
 ```
 
-The deterministic base estimate is `US$ 0.1951/hour`, `US$ 7.80` for 40 hours,
-and `US$ 142.42` for 730 hours. Data processing, PrivateLink endpoint AZ-hours,
-storage, logs, NLCUs, backups, and taxes remain variable. The monthly AWS Budget
-is `US$ 20`, with actual-spend notifications at 50, 75, and 100 percent; it is
-an alerting guardrail, not a hard spending cap.
+The deterministic credit estimate is `US$ 0.25829/hour`, `US$ 10.33` for 40
+hours, and `US$ 188.55` for 730 hours. It includes the Secrets Manager interface
+endpoint in two AZs. Data processing, storage, logs, NLCUs, secrets, backups,
+and taxes remain variable. The monthly AWS Budget is `US$ 20`, with actual-spend
+notifications at 50, 75, and 100 percent; it is an alerting guardrail, not a
+hard spending cap.
 
 ## Verification
 

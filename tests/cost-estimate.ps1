@@ -14,12 +14,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $estimate = $json | ConvertFrom-Json
-if ([decimal]$estimate.totals.'40h' -gt [decimal]8) {
-    throw "40-hour estimate exceeds USD 8: $($estimate.totals.'40h')"
+if ([decimal]$estimate.totals.'40h' -ne [decimal]10.33) {
+    throw "40-hour credit estimate changed: $($estimate.totals.'40h')"
 }
-if ([decimal]$estimate.totals.'730h' -lt [decimal]140 -or
-    [decimal]$estimate.totals.'730h' -gt [decimal]150) {
-    throw "730-hour estimate is outside USD 140-150: $($estimate.totals.'730h')"
+if ([decimal]$estimate.totals.'730h' -ne [decimal]188.55) {
+    throw "730-hour credit estimate changed: $($estimate.totals.'730h')"
 }
 
 Write-Output "Cost estimate PASSED: 40h=$($estimate.totals.'40h') 730h=$($estimate.totals.'730h')"

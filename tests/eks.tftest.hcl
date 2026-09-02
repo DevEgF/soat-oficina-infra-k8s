@@ -50,8 +50,8 @@ run "eks_contract" {
   }
 
   assert {
-    condition     = output.node_instance_type == "t3.medium"
-    error_message = "node size changed"
+    condition     = output.node_instance_type == "c7i-flex.large"
+    error_message = "node must preserve 2 vCPU and 4 GiB on the free account plan"
   }
 
   assert {

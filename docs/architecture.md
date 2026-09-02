@@ -10,8 +10,9 @@ environment-specific NLB listeners, target groups, and GitHub OIDC roles.
 - VPC `10.20.0.0/16` spans two availability zones in `us-east-1`.
 - EKS workers run in public subnets so the approved topology does not require a
   NAT Gateway. RDS and Lambda consumers use private subnets.
-- The shared EKS cluster runs one managed `t3.medium` node by default and can
-  scale to two nodes.
+- The shared EKS cluster runs one managed `c7i-flex.large` node by default and
+  can scale to two nodes. This Free-plan-compatible type preserves the approved
+  `t3.medium` capacity of 2 vCPU and 4 GiB after AWS rejected the original type.
 - One internal NLB routes port `8080` to the hml NodePort `30080` and port
   `8081` to the prod NodePort `30081`.
 - ECR stores immutable application images. EKS Pod Identity grants the
