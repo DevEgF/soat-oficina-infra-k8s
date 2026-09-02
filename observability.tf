@@ -121,6 +121,12 @@ resource "aws_cloudwatch_dashboard" "cluster" {
           title  = "Environment alarm status"
           region = var.aws_region
           view   = "timeSeries"
+          period = 60
+          stat   = "Maximum"
+          metrics = [
+            for environment in sort(keys(local.routing)) :
+            ["AWS/NetworkELB", "UnHealthyHostCount", "TargetGroup", aws_lb_target_group.environment[environment].arn_suffix, "LoadBalancer", aws_lb.internal.arn_suffix, { label = environment }]
+          ]
           annotations = {
             alarms = [for alarm in aws_cloudwatch_metric_alarm.nlb_unhealthy_hosts : alarm.arn]
           }
