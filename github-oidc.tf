@@ -33,10 +33,6 @@ locals {
     "autoscaling:AttachLoadBalancerTargetGroups",
     "autoscaling:DescribeAutoScalingGroups",
     "autoscaling:DetachLoadBalancerTargetGroups",
-    "budgets:CreateBudget",
-    "budgets:DeleteBudget",
-    "budgets:DescribeBudget",
-    "budgets:ModifyBudget",
     "cloudwatch:DeleteAlarms",
     "cloudwatch:DeleteDashboards",
     "cloudwatch:DescribeAlarms",
@@ -47,6 +43,9 @@ locals {
     "ec2:AuthorizeSecurityGroupEgress",
     "ec2:AuthorizeSecurityGroupIngress",
     "ec2:CreateInternetGateway",
+    "ec2:CreateLaunchTemplate",
+    "ec2:CreateLaunchTemplateVersion",
+    "ec2:CreateNetworkAclEntry",
     "ec2:CreateRoute",
     "ec2:CreateRouteTable",
     "ec2:CreateSecurityGroup",
@@ -55,6 +54,9 @@ locals {
     "ec2:CreateVpc",
     "ec2:CreateVpcEndpoint",
     "ec2:DeleteInternetGateway",
+    "ec2:DeleteLaunchTemplate",
+    "ec2:DeleteLaunchTemplateVersions",
+    "ec2:DeleteNetworkAclEntry",
     "ec2:DeleteRoute",
     "ec2:DeleteRouteTable",
     "ec2:DeleteSecurityGroup",
@@ -65,8 +67,12 @@ locals {
     "ec2:DescribeAddresses",
     "ec2:DescribeAvailabilityZones",
     "ec2:DescribeInternetGateways",
+    "ec2:DescribeLaunchTemplates",
+    "ec2:DescribeLaunchTemplateVersions",
     "ec2:DescribeNatGateways",
+    "ec2:DescribeNetworkAcls",
     "ec2:DescribeNetworkInterfaces",
+    "ec2:DescribePrefixLists",
     "ec2:DescribeRouteTables",
     "ec2:DescribeSecurityGroupRules",
     "ec2:DescribeSecurityGroups",
@@ -74,9 +80,11 @@ locals {
     "ec2:DescribeTags",
     "ec2:DescribeVpcEndpointServices",
     "ec2:DescribeVpcEndpoints",
+    "ec2:DescribeVpcAttribute",
     "ec2:DescribeVpcs",
     "ec2:DetachInternetGateway",
     "ec2:DisassociateRouteTable",
+    "ec2:ModifyLaunchTemplate",
     "ec2:ModifySubnetAttribute",
     "ec2:ModifyVpcAttribute",
     "ec2:ModifyVpcEndpoint",
@@ -129,6 +137,8 @@ locals {
     "elasticloadbalancing:DeleteListener",
     "elasticloadbalancing:DeleteLoadBalancer",
     "elasticloadbalancing:DeleteTargetGroup",
+    "elasticloadbalancing:DescribeCapacityReservation",
+    "elasticloadbalancing:DescribeListenerAttributes",
     "elasticloadbalancing:DescribeListeners",
     "elasticloadbalancing:DescribeLoadBalancerAttributes",
     "elasticloadbalancing:DescribeLoadBalancers",
@@ -139,6 +149,7 @@ locals {
     "elasticloadbalancing:ModifyTargetGroup",
     "elasticloadbalancing:ModifyTargetGroupAttributes",
     "elasticloadbalancing:RemoveTags",
+    "elasticloadbalancing:SetSecurityGroups",
     "kms:CreateAlias",
     "kms:CreateGrant",
     "kms:CreateKey",
@@ -146,6 +157,7 @@ locals {
     "kms:DescribeKey",
     "kms:DisableKey",
     "kms:EnableKey",
+    "kms:EnableKeyRotation",
     "kms:GetKeyPolicy",
     "kms:GetKeyRotationStatus",
     "kms:ListAliases",
@@ -166,12 +178,14 @@ locals {
     "secretsmanager:CreateSecret",
     "secretsmanager:DeleteSecret",
     "secretsmanager:DescribeSecret",
+    "secretsmanager:GetResourcePolicy",
     "secretsmanager:ListSecretVersionIds",
     "secretsmanager:PutSecretValue",
     "secretsmanager:TagResource",
     "secretsmanager:UntagResource",
     "sns:CreateTopic",
     "sns:DeleteTopic",
+    "sns:GetSubscriptionAttributes",
     "sns:GetTopicAttributes",
     "sns:ListTagsForResource",
     "sns:SetTopicAttributes",
@@ -310,6 +324,30 @@ resource "aws_iam_role_policy" "github_infra_k8s" {
         Effect   = "Allow"
         Action   = local.foundation_actions
         Resource = "*"
+      },
+      {
+        Sid    = "FoundationBudget"
+        Effect = "Allow"
+        Action = [
+          "budgets:ListTagsForResource",
+          "budgets:ModifyBudget",
+          "budgets:TagResource",
+          "budgets:UntagResource",
+          "budgets:ViewBudget",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:budgets::${data.aws_caller_identity.current.account_id}:budget/${local.project}-*"
+      },
+      {
+        Sid      = "FoundationBillingAccess"
+        Effect   = "Allow"
+        Action   = ["aws-portal:ModifyBilling", "aws-portal:ViewBilling"]
+        Resource = "*"
+      },
+      {
+        Sid      = "FoundationEksAmiParameter"
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}::parameter/aws/service/eks/optimized-ami/*"
       },
       {
         Sid    = "FoundationIam"

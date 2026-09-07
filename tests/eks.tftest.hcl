@@ -58,4 +58,9 @@ run "eks_contract" {
     condition     = aws_eks_addon.metrics_server.addon_name == "metrics-server"
     error_message = "HPA needs Metrics Server"
   }
+
+  assert {
+    condition     = module.eks.eks_managed_node_groups["main"].iam_role_name == "soat-oficina-eks-node"
+    error_message = "the node IAM role must be deterministic and stay inside the deploy policy resource scope"
+  }
 }

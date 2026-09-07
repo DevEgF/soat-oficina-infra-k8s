@@ -17,10 +17,12 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
-      instance_types = [var.node_instance_type]
-      min_size       = 1
-      desired_size   = 1
-      max_size       = 2
+      instance_types           = [var.node_instance_type]
+      min_size                 = 1
+      desired_size             = 1
+      max_size                 = 2
+      iam_role_name            = "${local.project}-eks-node"
+      iam_role_use_name_prefix = false
 
       iam_role_additional_policies = {
         CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
