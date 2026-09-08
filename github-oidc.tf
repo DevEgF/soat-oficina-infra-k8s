@@ -196,9 +196,6 @@ locals {
   ]
 
   database_actions = [
-    "cloudwatch:DeleteAlarms",
-    "cloudwatch:DescribeAlarms",
-    "cloudwatch:PutMetricAlarm",
     "ec2:AuthorizeSecurityGroupEgress",
     "ec2:AuthorizeSecurityGroupIngress",
     "ec2:CreateSecurityGroup",
@@ -217,8 +214,10 @@ locals {
     "rds:CreateDBParameterGroup",
     "rds:CreateDBSnapshot",
     "rds:CreateDBSubnetGroup",
+    "rds:CopyDBSnapshot",
     "rds:DeleteDBInstance",
     "rds:DeleteDBParameterGroup",
+    "rds:DeleteDBSnapshot",
     "rds:DeleteDBSubnetGroup",
     "rds:DescribeDBInstances",
     "rds:DescribeDBParameterGroups",
@@ -451,21 +450,56 @@ resource "aws_iam_role_policy" "github_infra_db" {
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:DisassociateKmsKey",
-          "logs:ListTagsForResource",
           "logs:PutRetentionPolicy",
-          "logs:TagResource",
-          "logs:UntagResource",
         ]
         Resource = "arn:${data.aws_partition.current.partition}:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/rds/instance/soat-oficina-db/postgresql:*"
       },
       {
+        Sid    = "DatabaseLogGroupTags"
+        Effect = "Allow"
+        Action = [
+          "logs:ListTagsForResource",
+          "logs:TagResource",
+          "logs:UntagResource",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/rds/instance/soat-oficina-db/postgresql"
+      },
+      {
+        Sid    = "DatabaseAlarms"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource",
+        ]
+        Resource = [
+          "arn:${data.aws_partition.current.partition}:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:soat-oficina-db-high-connections",
+          "arn:${data.aws_partition.current.partition}:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:soat-oficina-db-high-cpu",
+          "arn:${data.aws_partition.current.partition}:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:soat-oficina-db-low-storage",
+        ]
+      },
+      {
         Sid      = "DatabaseKmsCreate"
         Effect   = "Allow"
-        Action   = ["kms:CreateKey"]
+        Action   = ["kms:CreateKey", "kms:TagResource"]
         Resource = "*"
         Condition = {
           StringEquals = {
-            "aws:RequestTag/Project" = local.project
+            "aws:RequestTag/Component" = "infra-db"
+            "aws:RequestTag/Project"   = local.project
+          }
+          "ForAllValues:StringEquals" = {
+            "aws:TagKeys" = [
+              "Component",
+              "CreatedBy",
+              "GenerationModel",
+              "ManagedBy",
+              "Phase",
+              "Project",
+            ]
           }
         }
       },
@@ -495,7 +529,8 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
         Condition = {
           StringEquals = {
-            "aws:ResourceTag/Project" = local.project
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
           }
         }
       },
@@ -509,7 +544,66 @@ resource "aws_iam_role_policy" "github_infra_db" {
             "kms:GrantIsForAWSResource" = "true"
           }
           StringEquals = {
-            "aws:ResourceTag/Project" = local.project
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
+            "kms:ViaService"            = "rds.${var.aws_region}.amazonaws.com"
+          }
+        }
+      },
+      {
+        Sid    = "DatabaseKmsRdsUsage"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:ReEncrypt*",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+        Condition = {
+          StringEquals = {
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
+            "kms:ViaService"            = "rds.${var.aws_region}.amazonaws.com"
+          }
+        }
+      },
+      {
+        Sid    = "DatabaseManagedSecret"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:CreateSecret",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:TagResource",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:rds!db-*"
+      },
+      {
+        Sid      = "DatabaseKmsSecretsManagerUsage"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:DescribeKey", "kms:GenerateDataKey"]
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+        Condition = {
+          StringEquals = {
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
+            "kms:ViaService"            = "secretsmanager.${var.aws_region}.amazonaws.com"
+          }
+        }
+      },
+      {
+        Sid      = "DatabaseKmsSecretsManagerGrant"
+        Effect   = "Allow"
+        Action   = ["kms:CreateGrant"]
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+        Condition = {
+          Bool = { "kms:GrantIsForAWSResource" = "true" }
+          StringEquals = {
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
+            "kms:ViaService"            = "secretsmanager.${var.aws_region}.amazonaws.com"
           }
         }
       },
@@ -521,19 +615,29 @@ resource "aws_iam_role_policy" "github_infra_db" {
           "kms:DeleteAlias",
           "kms:UpdateAlias",
         ]
-        Resource = [
-          "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/soat-oficina-rds",
-          "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/soat-oficina-rds"
+      },
+      {
+        Sid    = "DatabaseKmsAliasTarget"
+        Effect = "Allow"
+        Action = [
+          "kms:CreateAlias",
+          "kms:UpdateAlias",
         ]
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+        Condition = {
+          StringEquals = {
+            "aws:ResourceTag/Component" = "infra-db"
+            "aws:ResourceTag/Project"   = local.project
+          }
+        }
       },
       {
         Sid    = "RdsMonitoringRoleLifecycle"
         Effect = "Allow"
         Action = [
-          "iam:AttachRolePolicy",
           "iam:CreateRole",
           "iam:DeleteRole",
-          "iam:DetachRolePolicy",
           "iam:GetRole",
           "iam:ListAttachedRolePolicies",
           "iam:ListRolePolicies",
@@ -542,6 +646,20 @@ resource "aws_iam_role_policy" "github_infra_db" {
           "iam:UpdateAssumeRolePolicy",
         ]
         Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/soat-oficina-rds-monitoring"
+      },
+      {
+        Sid    = "RdsMonitoringPolicyAttachment"
+        Effect = "Allow"
+        Action = [
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/soat-oficina-rds-monitoring"
+        Condition = {
+          StringEquals = {
+            "iam:PolicyARN" = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+          }
+        }
       },
       {
         Sid      = "PassRdsMonitoringRole"
@@ -561,12 +679,18 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/soat-oficina-app-pod"
       },
       {
-        Sid      = "TerraformStateBucket"
+        Sid      = "TerraformStateBucketLocation"
         Effect   = "Allow"
-        Action   = local.state_actions
+        Action   = ["s3:GetBucketLocation"]
+        Resource = local.state_bucket_arn
+      },
+      {
+        Sid      = "TerraformStateBucketList"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
         Resource = local.state_bucket_arn
         Condition = {
-          StringLike = { "s3:prefix" = ["infra-db/*"] }
+          StringLike = { "s3:prefix" = ["infra-db/*", "infra-k8s/terraform.tfstate"] }
         }
       },
       {
@@ -574,6 +698,12 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Effect   = "Allow"
         Action   = local.state_object_actions
         Resource = "${local.state_bucket_arn}/infra-db/*"
+      },
+      {
+        Sid      = "FoundationStateRead"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${local.state_bucket_arn}/infra-k8s/terraform.tfstate"
       },
     ]
   })
