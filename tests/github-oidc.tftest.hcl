@@ -54,6 +54,7 @@ run "oidc_scope" {
   assert {
     condition = alltrue([
       for action in [
+        "cloudwatch:GetDashboard",
         "cloudwatch:ListTagsForResource",
         "ec2:CreateNetworkAclEntry",
         "ec2:CreateLaunchTemplate",
