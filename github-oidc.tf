@@ -36,6 +36,7 @@ locals {
     "cloudwatch:DeleteAlarms",
     "cloudwatch:DeleteDashboards",
     "cloudwatch:DescribeAlarms",
+    "cloudwatch:ListTagsForResource",
     "cloudwatch:PutDashboard",
     "cloudwatch:PutMetricAlarm",
     "ec2:AssociateRouteTable",
@@ -241,6 +242,7 @@ locals {
     "cloudwatch:DeleteAlarms",
     "cloudwatch:DeleteDashboards",
     "cloudwatch:DescribeAlarms",
+    "cloudwatch:ListTagsForResource",
     "cloudwatch:PutDashboard",
     "cloudwatch:PutMetricAlarm",
     "ec2:DescribeNetworkInterfaces",
@@ -443,10 +445,20 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Resource = "*"
       },
       {
+        Sid      = "RdsServiceLinkedRole"
+        Effect   = "Allow"
+        Action   = ["iam:CreateServiceLinkedRole"]
+        Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+        Condition = {
+          StringEquals = { "iam:AWSServiceName" = "rds.amazonaws.com" }
+        }
+      },
+      {
         Sid    = "DatabaseLogGroup"
         Effect = "Allow"
         Action = [
           "logs:AssociateKmsKey",
+          "logs:TagResource",
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:DisassociateKmsKey",
@@ -470,6 +482,7 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Action = [
           "cloudwatch:DeleteAlarms",
           "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
           "cloudwatch:ListTagsForResource",
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:TagResource",
