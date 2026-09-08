@@ -336,4 +336,14 @@ run "oidc_scope" {
     ])
     error_message = "first RDS deployment must create only the RDS service-linked role"
   }
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "PassRdsMonitoringRole" &&
+      statement.Resource == "arn:aws:iam::111122223333:role/soat-oficina-rds-monitoring" &&
+      statement.Condition.StringEquals["iam:PassedToService"] == "rds.amazonaws.com"
+    ])
+    error_message = "CreateDBInstance passes the monitoring role to RDS, not to the monitoring trust principal"
+  }
+
 }
