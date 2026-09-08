@@ -96,3 +96,13 @@ kubectl get pods -A
 
 See [architecture](docs/architecture.md) and the [operations runbook](docs/runbook.md)
 for boundaries, initial setup, routine deployments, and teardown sequencing.
+
+## GitHub OIDC subject identifiers
+
+The GitHub OIDC subject includes immutable owner and repository IDs. The defaults
+in `github_owner_id` and `github_repository_ids` match these four repositories,
+verified on 2026-09-08. If recreating the repositories or using another owner,
+update both inputs from `gh api repos/OWNER/REPOSITORY/actions/oidc/customization/sub`
+and its `sub_claim_prefix`; names alone no longer identify the subject.
+Trust remains an exact StringEquals match for the repository and hml/prod environment.
+See https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims.

@@ -46,7 +46,7 @@ run "oidc_scope" {
   assert {
     condition = strcontains(
       aws_iam_role.github_deploy["soat-oficina-app:prod"].assume_role_policy,
-      "repo:example-owner/soat-oficina-app:environment:prod"
+      "repo:example-owner@104474051/soat-oficina-app@1226897491:environment:prod"
     )
     error_message = "prod trust must be scoped to the prod GitHub Environment"
   }
