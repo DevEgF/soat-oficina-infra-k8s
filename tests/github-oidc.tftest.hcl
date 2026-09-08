@@ -137,4 +137,58 @@ run "oidc_scope" {
     ])
     error_message = "EKS AMI lookup must be limited to the public optimized-ami parameter path"
   }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "DatabaseServices" && alltrue([
+        for action in [
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupEgress",
+          "rds:CreateDBSnapshot",
+          "rds:DescribeDBSnapshots",
+          "logs:DescribeLogGroups",
+        ] : contains(statement.Action, action)
+      ])
+    ])
+    error_message = "the database deploy role must cover the planned network, snapshot and log discovery lifecycle"
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "DatabaseLogGroup" &&
+      statement.Resource == "arn:aws:logs:us-east-1:111122223333:log-group:/aws/rds/instance/soat-oficina-db/postgresql:*" &&
+      contains(statement.Action, "logs:AssociateKmsKey")
+    ])
+    error_message = "database log management must be scoped to the exact PostgreSQL log group"
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "DatabaseKmsKeyLifecycle" &&
+      statement.Resource == "arn:aws:kms:us-east-1:111122223333:key/*" &&
+      statement.Condition.StringEquals["aws:ResourceTag/Project"] == "soat-oficina"
+    ])
+    error_message = "database KMS lifecycle actions must be scoped to project-tagged keys"
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "RdsMonitoringRoleLifecycle" &&
+      statement.Resource == "arn:aws:iam::111122223333:role/soat-oficina-rds-monitoring" &&
+      contains(statement.Action, "iam:AttachRolePolicy")
+    ])
+    error_message = "database IAM lifecycle must be scoped to the exact enhanced monitoring role"
+  }
+
+  assert {
+    condition = alltrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      !contains(statement.Action, "secretsmanager:GetSecretValue")
+    ])
+    error_message = "the database deployment role must never read the RDS credential value"
+  }
 }
