@@ -346,4 +346,14 @@ run "oidc_scope" {
     error_message = "CreateDBInstance passes the monitoring role to RDS, not to the monitoring trust principal"
   }
 
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "RdsDefaultSecretKeyDiscovery" && statement.Action == ["kms:DescribeKey"] &&
+      statement.Condition["ForAnyValue:StringEquals"]["kms:ResourceAliases"] == "alias/aws/secretsmanager" &&
+      statement.Condition.StringEquals["kms:ViaService"] == "rds.us-east-1.amazonaws.com"
+    ])
+    error_message = "RDS must discover the default Secrets Manager key without decrypt permission"
+  }
+
 }

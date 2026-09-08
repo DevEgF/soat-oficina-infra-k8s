@@ -524,6 +524,16 @@ resource "aws_iam_role_policy" "github_infra_db" {
         }
       },
       {
+        Sid      = "RdsDefaultSecretKeyDiscovery"
+        Effect   = "Allow"
+        Action   = ["kms:DescribeKey"]
+        Resource = "arn:${data.aws_partition.current.partition}:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+        Condition = {
+          StringEquals               = { "kms:ViaService" = "rds.${var.aws_region}.amazonaws.com" }
+          "ForAnyValue:StringEquals" = { "kms:ResourceAliases" = "alias/aws/secretsmanager" }
+        }
+      },
+      {
         Sid      = "DatabaseKmsDiscovery"
         Effect   = "Allow"
         Action   = ["kms:ListAliases"]
