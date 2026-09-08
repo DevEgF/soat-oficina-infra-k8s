@@ -35,6 +35,7 @@ locals {
     "autoscaling:DetachLoadBalancerTargetGroups",
     "cloudwatch:DeleteAlarms",
     "cloudwatch:DeleteDashboards",
+    "cloudwatch:GetDashboard",
     "cloudwatch:DescribeAlarms",
     "cloudwatch:ListTagsForResource",
     "cloudwatch:PutDashboard",
@@ -456,7 +457,7 @@ resource "aws_iam_role_policy" "github_infra_db" {
       {
         Sid      = "RdsServiceLinkedRoleLifecycle"
         Effect   = "Allow"
-        Action   = ["iam:GetRole", "iam:DeleteServiceLinkedRole", "iam:GetServiceLinkedRoleDeletionStatus"]
+        Action   = ["iam:GetRole", "iam:TagRole", "iam:UntagRole", "iam:DeleteServiceLinkedRole", "iam:GetServiceLinkedRoleDeletionStatus"]
         Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
       },
       {
