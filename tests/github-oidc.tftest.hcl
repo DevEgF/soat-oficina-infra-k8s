@@ -54,6 +54,7 @@ run "oidc_scope" {
   assert {
     condition = alltrue([
       for action in [
+        "cloudwatch:ListTagsForResource",
         "ec2:CreateNetworkAclEntry",
         "ec2:CreateLaunchTemplate",
         "ec2:CreateLaunchTemplateVersion",
@@ -161,7 +162,7 @@ run "oidc_scope" {
       for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
       statement.Sid == "DatabaseLogGroup" &&
       statement.Resource == "arn:aws:logs:us-east-1:111122223333:log-group:/aws/rds/instance/soat-oficina-db/postgresql:*" &&
-      contains(statement.Action, "logs:AssociateKmsKey")
+      contains(statement.Action, "logs:AssociateKmsKey") && contains(statement.Action, "logs:TagResource")
     ])
     error_message = "database log management must be scoped to the exact PostgreSQL log group"
   }
@@ -322,5 +323,16 @@ run "oidc_scope" {
       contains(statement.Condition.StringLike["s3:prefix"], "infra-k8s/terraform.tfstate")
     ])
     error_message = "ListBucket must be limited to the database state prefix and exact foundation state key"
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_db["soat-oficina-infra-db:prod"].policy).Statement :
+      statement.Sid == "RdsServiceLinkedRole" &&
+      statement.Action == ["iam:CreateServiceLinkedRole"] &&
+      statement.Resource == "arn:aws:iam::111122223333:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS" &&
+      statement.Condition.StringEquals["iam:AWSServiceName"] == "rds.amazonaws.com"
+    ])
+    error_message = "first RDS deployment must create only the RDS service-linked role"
   }
 }
