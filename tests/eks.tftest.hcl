@@ -64,7 +64,7 @@ run "eks_contract" {
     error_message = "the node IAM role must be deterministic and stay inside the deploy policy resource scope"
   }
   assert {
-    condition = module.eks.access_entries["cluster_creator"].principal_arn == "arn:aws:iam::111122223333:user/oficina-admin"
+    condition     = module.eks.access_entries["cluster_creator"].principal_arn == "arn:aws:iam::111122223333:user/oficina-admin"
     error_message = "running Terraform as a pipeline must preserve the bootstrap administrator"
   }
 
