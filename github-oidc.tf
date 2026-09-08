@@ -688,7 +688,7 @@ resource "aws_iam_role_policy" "github_infra_db" {
         Resource = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/soat-oficina-rds-monitoring"
         Condition = {
           StringEquals = {
-            "iam:PassedToService" = "monitoring.rds.amazonaws.com"
+            "iam:PassedToService" = "rds.amazonaws.com"
           }
         }
       },
