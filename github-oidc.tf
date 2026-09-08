@@ -1,3 +1,8 @@
+data "aws_kms_alias" "secretsmanager" {
+  name       = "alias/aws/secretsmanager"
+  depends_on = [aws_secretsmanager_secret_version.jwt]
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
@@ -521,6 +526,15 @@ resource "aws_iam_role_policy" "github_infra_db" {
               "Project",
             ]
           }
+        }
+      },
+      {
+        Sid      = "RdsDefaultSecretKeyDiscovery"
+        Effect   = "Allow"
+        Action   = ["kms:DescribeKey"]
+        Resource = data.aws_kms_alias.secretsmanager.target_key_arn
+        Condition = {
+          StringEquals = { "kms:ViaService" = "rds.${var.aws_region}.amazonaws.com" }
         }
       },
       {
