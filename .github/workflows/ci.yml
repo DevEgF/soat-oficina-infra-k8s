@@ -15,7 +15,7 @@ env:
 
 jobs:
   validate:
-    name: validate
+    name: terraform / validate
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -34,7 +34,7 @@ jobs:
         run: terraform test
 
   security:
-    name: security
+    name: terraform / security
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
