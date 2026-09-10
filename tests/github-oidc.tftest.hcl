@@ -53,6 +53,48 @@ run "oidc_scope" {
 
   assert {
     condition = alltrue([
+      for environment in ["hml", "prod"] : anytrue([
+        for statement in jsondecode(aws_iam_role_policy.github_auth["soat-oficina-auth:${environment}"].policy).Statement :
+        statement.Sid == "TerraformStateObjects" && toset(statement.Resource) == toset([
+          "arn:aws:s3:::soat-oficina-tfstate-111122223333-us-east-1/auth/${environment}/*",
+          "arn:aws:s3:::soat-oficina-tfstate-111122223333-us-east-1/auth/shared/*",
+        ])
+      ])
+    ])
+    error_message = "Auth deployment must write only its environment and the shared VPC Link state."
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_auth["soat-oficina-auth:hml"].policy).Statement :
+      statement.Sid == "AuthenticationDependencyStateRead" && statement.Action == ["s3:GetObject"] &&
+      toset(statement.Resource) == toset([
+        "arn:aws:s3:::soat-oficina-tfstate-111122223333-us-east-1/infra-k8s/terraform.tfstate",
+        "arn:aws:s3:::soat-oficina-tfstate-111122223333-us-east-1/infra-db/terraform.tfstate",
+      ])
+    ])
+    error_message = "Auth must read exact foundation/DB state metadata without write access."
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_auth["soat-oficina-auth:prod"].policy).Statement :
+      statement.Sid == "AuthenticationVersionsAndConcurrency" &&
+      contains(statement.Action, "lambda:CreateAlias") && contains(statement.Action, "lambda:PutFunctionConcurrency") &&
+      statement.Resource == "arn:aws:lambda:us-east-1:111122223333:function:soat-oficina-auth-prod-*"
+    ])
+    error_message = "Alias and reserved concurrency lifecycle must be enabled only for the selected auth environment."
+  }
+
+  assert {
+    condition = alltrue([
+      for policy in aws_iam_role_policy.github_auth : length(policy.policy) < 10240
+    ])
+    error_message = "Auth role policy must fit IAM's inline role policy size limit."
+  }
+
+  assert {
+    condition = alltrue([
       for action in [
         "cloudwatch:GetDashboard",
         "cloudwatch:ListTagsForResource",
@@ -80,6 +122,19 @@ run "oidc_scope" {
       ]), action)
     ])
     error_message = "the foundation deploy role must include the observed Terraform lifecycle actions"
+  }
+
+  assert {
+    condition = anytrue([
+      for statement in jsondecode(aws_iam_role_policy.github_infra_k8s["soat-oficina-infra-k8s:prod"].policy).Statement :
+      statement.Sid == "FoundationAlarmTags" &&
+      toset(statement.Action) == toset(["cloudwatch:TagResource", "cloudwatch:UntagResource"]) &&
+      toset(statement.Resource) == toset([
+        "arn:aws:cloudwatch:us-east-1:111122223333:alarm:soat-oficina-hml-unhealthy-hosts",
+        "arn:aws:cloudwatch:us-east-1:111122223333:alarm:soat-oficina-prod-unhealthy-hosts"
+      ])
+    ])
+    error_message = "Foundation tagging permissions must cover only its two NLB alarms"
   }
 
   assert {

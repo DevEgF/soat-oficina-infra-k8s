@@ -14,7 +14,21 @@ resource "aws_eks_addon" "cloudwatch" {
   cluster_name = module.eks.cluster_name
   addon_name   = "amazon-cloudwatch-observability"
 
-  depends_on = [module.eks]
+  configuration_values = jsonencode({
+    containerLogs = {
+      fluentBit = {
+        config = {
+          extraFiles = {
+            "application-log.conf" = templatefile("${path.module}/observability/application-log.conf.tftpl", {
+              cluster_name = local.cluster_name
+            })
+          }
+        }
+      }
+    }
+  })
+
+  depends_on = [module.eks, aws_cloudwatch_log_group.application]
 }
 
 resource "aws_eks_addon" "secrets_csi" {

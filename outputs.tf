@@ -90,3 +90,8 @@ output "budget_name" {
 output "alerts_topic_arn" {
   value = aws_sns_topic.alerts.arn
 }
+
+output "staff_secret_arns" {
+  description = "Environment-specific staff configuration references; no secret values."
+  value       = { for environment, secret in aws_secretsmanager_secret.staff : environment => secret.arn }
+}

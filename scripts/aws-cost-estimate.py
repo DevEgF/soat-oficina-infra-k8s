@@ -27,8 +27,10 @@ HOURLY_COSTS = {
 }
 WINDOWS = (4, 8, 24, 40, 730)
 VARIABLE_COST_NOTE = (
-    "Data processing, EBS/RDS storage, logs, NLCUs, secrets, backups and taxes "
-    "vary and require review before apply. Free plan usage consumes credits."
+    "Data processing, EBS/RDS storage, logs, NLCUs, secrets, backups, KMS API requests and taxes "
+    "vary and require review before apply. Totals exclude the new alarm KMS key's "
+    "$1/month base storage charge, prorated hourly (https://aws.amazon.com/kms/pricing/). "
+    "Free plan usage consumes credits."
 )
 
 
