@@ -28,6 +28,7 @@ class CloudWatchStub(BaseHTTPRequestHandler):
         payload = json.dumps({"nextSequenceToken": "1"}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/x-amz-json-1.1")
+        self.send_header("x-amzn-RequestId", "local-log-transport-test")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
