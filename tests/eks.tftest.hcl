@@ -60,6 +60,15 @@ run "eks_contract" {
   }
 
   assert {
+    condition = alltrue([
+      for environment in ["hml", "prod"] :
+      toset(aws_eks_access_entry.app_deploy[environment].kubernetes_groups) == toset(["oficina-app-deploy-${environment}"]) &&
+      toset(aws_eks_access_policy_association.app_deploy[environment].access_scope[0].namespaces) == toset([environment])
+    ])
+    error_message = "Application deploy groups and access scopes must remain isolated by environment."
+  }
+
+  assert {
     condition     = module.eks.eks_managed_node_groups["main"].iam_role_name == "soat-oficina-eks-node"
     error_message = "the node IAM role must be deterministic and stay inside the deploy policy resource scope"
   }

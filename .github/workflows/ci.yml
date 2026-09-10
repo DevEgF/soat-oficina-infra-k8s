@@ -32,6 +32,8 @@ jobs:
         run: terraform validate
       - name: Run Terraform tests
         run: terraform test
+      - name: Verify application log transport locally
+        run: python3 scripts/test-log-transport.py
 
   security:
     name: terraform / security

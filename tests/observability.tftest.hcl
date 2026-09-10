@@ -1,4 +1,10 @@
 mock_provider "aws" {
+  mock_resource "aws_kms_key" {
+    override_during = plan
+    defaults = {
+      arn = "arn:aws:kms:us-east-1:111122223333:key/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    }
+  }
   mock_data "aws_availability_zones" {
     defaults = {
       names = ["us-east-1a", "us-east-1b"]
@@ -75,9 +81,44 @@ override_resource {
 run "dashboard_alarm_widget_schema" {
   command = plan
 
+  assert {
+    condition = (
+      keys(jsondecode(aws_eks_addon.cloudwatch.configuration_values).containerLogs.fluentBit.config.extraFiles) == ["application-log.conf"] &&
+      alltrue([for environment in ["hml", "prod"] : strcontains(
+        jsondecode(aws_eks_addon.cloudwatch.configuration_values).containerLogs.fluentBit.config.extraFiles["application-log.conf"],
+        "/aws/eks/${local.cluster_name}/${environment}/application"
+      )]) &&
+      length(regexall("log_key[ ]+log", jsondecode(aws_eks_addon.cloudwatch.configuration_values).containerLogs.fluentBit.config.extraFiles["application-log.conf"])) == 2
+    )
+    error_message = "Application logs must preserve the original EMF payload in each environment's group while retaining host/dataplane defaults."
+  }
+
   variables {
     github_owner = "example-owner"
     alert_email  = "owner@example.com"
+  }
+
+  assert {
+    condition = (
+      aws_sns_topic.alerts.kms_master_key_id == aws_kms_key.alerts.arn &&
+      aws_kms_key.alerts.enable_key_rotation &&
+      jsondecode(aws_kms_key.alerts.policy).Statement[1].Principal.Service == "cloudwatch.amazonaws.com" &&
+      toset(jsondecode(aws_kms_key.alerts.policy).Statement[1].Action) == toset(["kms:Decrypt", "kms:GenerateDataKey*"]) &&
+      jsondecode(aws_kms_key.alerts.policy).Statement[1].Condition.StringEquals["aws:SourceAccount"] == "111122223333" &&
+      jsondecode(aws_kms_key.alerts.policy).Statement[1].Condition.ArnLike["aws:SourceArn"] == "arn:aws:cloudwatch:us-east-1:111122223333:alarm:soat-oficina-*"
+    )
+    error_message = "Alarm encryption must allow only this account's Oficina CloudWatch alarms through a rotating customer-managed key."
+  }
+
+  assert {
+    condition = (
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[1].Principal.Service == "cloudwatch.amazonaws.com" &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[1].Action == "sns:Publish" &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[1].Resource == "arn:aws:sns:us-east-1:111122223333:soat-oficina-alerts" &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[1].Condition.StringEquals["aws:SourceAccount"] == "111122223333" &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[1].Condition.ArnLike["aws:SourceArn"] == "arn:aws:cloudwatch:us-east-1:111122223333:alarm:soat-oficina-*"
+    )
+    error_message = "SNS publishing must be scoped to Oficina alarms in the same region and account."
   }
 
   assert {

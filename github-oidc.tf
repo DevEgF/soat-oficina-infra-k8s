@@ -333,6 +333,12 @@ resource "aws_iam_role_policy" "github_infra_k8s" {
         Resource = "*"
       },
       {
+        Sid      = "FoundationAlarmTags"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:TagResource", "cloudwatch:UntagResource"]
+        Resource = [for environment in local.environments : "arn:${data.aws_partition.current.partition}:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:${local.project}-${environment}-unhealthy-hosts"]
+      },
+      {
         Sid    = "FoundationBudget"
         Effect = "Allow"
         Action = [
@@ -758,6 +764,57 @@ resource "aws_iam_role_policy" "github_auth" {
         Resource = "*"
       },
       {
+        Sid    = "AuthenticationVersionsAndConcurrency"
+        Effect = "Allow"
+        Action = [
+          "lambda:CreateAlias", "lambda:GetAlias", "lambda:UpdateAlias", "lambda:DeleteAlias",
+          "lambda:ListAliases", "lambda:ListVersionsByFunction", "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionConcurrency", "lambda:PutFunctionConcurrency", "lambda:DeleteFunctionConcurrency",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:soat-oficina-auth-${each.value.environment}-*"
+      },
+      {
+        Sid      = "AuthenticationDashboardRead"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:GetDashboard"]
+        Resource = "arn:${data.aws_partition.current.partition}:cloudwatch::${data.aws_caller_identity.current.account_id}:dashboard/soat-oficina-${each.value.environment}"
+      },
+      {
+        Sid      = "AuthenticationAlarmTags"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:TagResource", "cloudwatch:UntagResource"]
+        Resource = "arn:${data.aws_partition.current.partition}:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:soat-oficina-auth-${each.value.environment}-*"
+      },
+      {
+        Sid      = "AuthenticationCanaryTags"
+        Effect   = "Allow"
+        Action   = ["synthetics:ListTagsForResource", "synthetics:TagResource", "synthetics:UntagResource"]
+        Resource = "arn:${data.aws_partition.current.partition}:synthetics:${var.aws_region}:${data.aws_caller_identity.current.account_id}:canary:oficina-${each.value.environment}-health"
+      },
+      {
+        Sid    = "AuthenticationCanaryBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:CreateBucket", "s3:DeleteBucket", "s3:ListBucket", "s3:ListBucketVersions", "s3:GetBucketLocation",
+          "s3:GetBucketAcl", "s3:GetBucketCORS", "s3:GetBucketWebsite", "s3:GetAccelerateConfiguration",
+          "s3:GetReplicationConfiguration", "s3:GetBucketLogging", "s3:GetBucketRequestPayment",
+          "s3:GetBucketObjectLockConfiguration", "s3:GetBucketTagging", "s3:PutBucketTagging",
+          "s3:GetBucketPolicy", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy",
+          "s3:GetBucketPublicAccessBlock", "s3:PutBucketPublicAccessBlock",
+          "s3:GetBucketOwnershipControls", "s3:PutBucketOwnershipControls",
+          "s3:GetEncryptionConfiguration", "s3:PutEncryptionConfiguration",
+          "s3:GetLifecycleConfiguration", "s3:PutLifecycleConfiguration",
+          "s3:GetBucketVersioning", "s3:PutBucketVersioning",
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:s3:::soat-oficina-auth-${each.value.environment}-canary-${data.aws_caller_identity.current.account_id}"
+      },
+      {
+        Sid      = "AuthenticationCanaryArtifactCleanup"
+        Effect   = "Allow"
+        Action   = ["s3:DeleteObject", "s3:DeleteObjectVersion"]
+        Resource = "arn:${data.aws_partition.current.partition}:s3:::soat-oficina-auth-${each.value.environment}-canary-${data.aws_caller_identity.current.account_id}/*"
+      },
+      {
         Sid    = "AuthenticationIam"
         Effect = "Allow"
         Action = [
@@ -789,19 +846,31 @@ resource "aws_iam_role_policy" "github_auth" {
         }
       },
       {
-        Sid      = "TerraformStateBucket"
+        Sid      = "TerraformStateBucketLocation"
         Effect   = "Allow"
-        Action   = local.state_actions
+        Action   = ["s3:GetBucketLocation"]
+        Resource = local.state_bucket_arn
+      },
+      {
+        Sid      = "TerraformStateBucketList"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
         Resource = local.state_bucket_arn
         Condition = {
-          StringLike = { "s3:prefix" = ["auth/*"] }
+          StringLike = { "s3:prefix" = ["auth/${each.value.environment}/*", "auth/shared/*", "infra-k8s/terraform.tfstate", "infra-db/terraform.tfstate"] }
         }
       },
       {
         Sid      = "TerraformStateObjects"
         Effect   = "Allow"
         Action   = local.state_object_actions
-        Resource = "${local.state_bucket_arn}/auth/*"
+        Resource = ["${local.state_bucket_arn}/auth/${each.value.environment}/*", "${local.state_bucket_arn}/auth/shared/*"]
+      },
+      {
+        Sid      = "AuthenticationDependencyStateRead"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = ["${local.state_bucket_arn}/infra-k8s/terraform.tfstate", "${local.state_bucket_arn}/infra-db/terraform.tfstate"]
       },
     ]
   })
@@ -851,10 +920,11 @@ resource "aws_iam_role_policy" "github_app" {
 resource "aws_eks_access_entry" "app_deploy" {
   for_each = local.environments
 
-  cluster_name  = module.eks.cluster_name
-  principal_arn = aws_iam_role.github_deploy["soat-oficina-app:${each.value}"].arn
-  type          = "STANDARD"
-  tags          = merge(local.common_tags, { Environment = each.value })
+  cluster_name      = module.eks.cluster_name
+  principal_arn     = aws_iam_role.github_deploy["soat-oficina-app:${each.value}"].arn
+  type              = "STANDARD"
+  kubernetes_groups = ["oficina-app-deploy-${each.value}"]
+  tags              = merge(local.common_tags, { Environment = each.value })
 }
 
 resource "aws_eks_access_policy_association" "app_deploy" {

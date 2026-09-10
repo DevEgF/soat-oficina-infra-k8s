@@ -31,6 +31,25 @@ resource "aws_iam_role_policy" "app_jwt_secret" {
   policy = data.aws_iam_policy_document.app_jwt_secret.json
 }
 
+resource "aws_iam_role_policy" "app_staff_secrets" {
+  name = "read-environment-staff-secret"
+  role = aws_iam_role.app_pod.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [for environment in local.environments : {
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+      Resource = aws_secretsmanager_secret.staff[environment].arn
+      Condition = {
+        StringEquals = {
+          "aws:PrincipalTag/kubernetes-namespace"       = environment
+          "aws:PrincipalTag/kubernetes-service-account" = "oficina-app"
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_eks_pod_identity_association" "app" {
   for_each = local.environments
 
