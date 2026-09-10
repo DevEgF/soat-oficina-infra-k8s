@@ -43,7 +43,6 @@ try:
     with tempfile.TemporaryDirectory(prefix="oficina-log-transport-") as directory:
         work = Path(directory)
         (work / "logs").mkdir()
-        (work / "state").mkdir()
         subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
                         "-keyout", str(work / "key.pem"), "-out", str(work / "cert.pem"),
                         "-days", "1", "-subj", "/CN=host.docker.internal"],
@@ -63,7 +62,7 @@ try:
         config = config.replace("$${AWS_REGION}", "us-east-1")
         config = config.replace("$${HOST_NAME}", "local-test")
         config = config.replace("/var/log/containers", "/test/logs")
-        config = config.replace("/var/fluent-bit/state", "/test/state")
+        config = config.replace("/var/fluent-bit/state", "/state")
         config = config.replace("Refresh_Interval    10", "Refresh_Interval    1")
         config = config.replace("Name                cloudwatch_logs",
                                 "Name                cloudwatch_logs\n"
@@ -71,7 +70,7 @@ try:
                                 f"    port                {server.server_port}\n"
                                 "    tls                 On\n"
                                 "    tls.verify          Off")
-        config = "[SERVICE]\n    Flush 1\n    storage.path /test/state\n" + config
+        config = "[SERVICE]\n    Flush 1\n    storage.path /state\n" + config
         assert "${" not in config and "%{" not in config
         (work / "fluent-bit.conf").write_text(config)
         expected = []
@@ -95,7 +94,8 @@ try:
                         "--add-host", "host.docker.internal:host-gateway",
                         "-e", "AWS_ACCESS_KEY_ID=local-test", "-e", "AWS_SECRET_ACCESS_KEY=local-test",
                         "-e", "AWS_EC2_METADATA_DISABLED=true",
-                        "--mount", f"type=bind,source={work},target=/test", IMAGE,
+                        "--tmpfs", "/state:rw",
+                        "--mount", f"type=bind,source={work},target=/test,readonly", IMAGE,
                         "/fluent-bit/bin/fluent-bit", "-c", "/test/fluent-bit.conf"],
                        check=True, capture_output=True, text=True)
         deadline = time.monotonic() + 45
