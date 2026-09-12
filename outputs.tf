@@ -1,0 +1,97 @@
+output "cluster_name" {
+  value = local.cluster_name
+}
+
+output "environments" {
+  value = local.environments
+}
+
+output "kubernetes_version" {
+  value = var.kubernetes_version
+}
+
+output "node_instance_type" {
+  value = var.node_instance_type
+}
+
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+output "public_subnet_ids" {
+  value = module.vpc.public_subnets
+}
+
+output "private_subnet_ids" {
+  value = module.vpc.private_subnets
+}
+
+output "lambda_security_group_id" {
+  value = aws_security_group.lambda.id
+}
+
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "node_security_group_id" {
+  value = module.eks.node_security_group_id
+}
+
+output "node_autoscaling_group_names" {
+  value = module.eks.eks_managed_node_groups_autoscaling_group_names
+}
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.app.repository_url
+}
+
+output "jwt_secret_arn" {
+  value     = aws_secretsmanager_secret.jwt.arn
+  sensitive = true
+}
+
+output "app_pod_identity_role_name" {
+  value = aws_iam_role.app_pod.name
+}
+
+output "nlb_arn" {
+  value = aws_lb.internal.arn
+}
+
+output "nlb_dns_name" {
+  value = aws_lb.internal.dns_name
+}
+
+output "hml_listener_arn" {
+  value = aws_lb_listener.environment["hml"].arn
+}
+
+output "prod_listener_arn" {
+  value = aws_lb_listener.environment["prod"].arn
+}
+
+output "hml_target_group_arn" {
+  value = aws_lb_target_group.environment["hml"].arn
+}
+
+output "prod_target_group_arn" {
+  value = aws_lb_target_group.environment["prod"].arn
+}
+
+output "github_deploy_role_arns" {
+  value = { for key, role in aws_iam_role.github_deploy : key => role.arn }
+}
+
+output "budget_name" {
+  value = aws_budgets_budget.project.name
+}
+
+output "alerts_topic_arn" {
+  value = aws_sns_topic.alerts.arn
+}
+
+output "staff_secret_arns" {
+  description = "Environment-specific staff configuration references; no secret values."
+  value       = { for environment, secret in aws_secretsmanager_secret.staff : environment => secret.arn }
+}

@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hml
+  labels:
+    app.kubernetes.io/part-of: oficina
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+  labels:
+    app.kubernetes.io/part-of: oficina
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: oficina-secret-provider-deploy
+  namespace: hml
+rules:
+  - apiGroups: [secrets-store.csi.x-k8s.io]
+    resources: [secretproviderclasses]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: oficina-secret-provider-deploy
+  namespace: hml
+subjects:
+  - kind: Group
+    name: oficina-app-deploy-hml
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: oficina-secret-provider-deploy
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: oficina-secret-provider-deploy
+  namespace: prod
+rules:
+  - apiGroups: [secrets-store.csi.x-k8s.io]
+    resources: [secretproviderclasses]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: oficina-secret-provider-deploy
+  namespace: prod
+subjects:
+  - kind: Group
+    name: oficina-app-deploy-prod
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: oficina-secret-provider-deploy
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: oficina-app
+  namespace: hml
+  labels:
+    app.kubernetes.io/part-of: oficina
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: oficina-app
+  namespace: prod
+  labels:
+    app.kubernetes.io/part-of: oficina
