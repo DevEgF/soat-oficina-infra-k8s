@@ -58,6 +58,19 @@ resource "aws_vpc_security_group_egress_rule" "nlb_to_nodes" {
   ip_protocol                  = "tcp"
 }
 
+# HTTP API VPC links use ENIs carrying this security group. The NLB's
+# PrivateLink bypass applies to legacy REST API links, not these connections.
+resource "aws_vpc_security_group_ingress_rule" "nlb_from_vpc_link" {
+  for_each = local.routing
+
+  security_group_id            = aws_security_group.nlb.id
+  referenced_security_group_id = aws_security_group.lambda.id
+  description                  = "Accept ${each.key} listener traffic from the HTTP API VPC link"
+  from_port                    = each.value.listener
+  to_port                      = each.value.listener
+  ip_protocol                  = "tcp"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "nodes_from_nlb" {
   for_each = local.routing
 
