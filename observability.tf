@@ -54,8 +54,13 @@ resource "aws_sns_topic_policy" "alerts" {
         Sid       = "AllowAccountAdministration"
         Effect    = "Allow"
         Principal = { AWS = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action    = "sns:*"
-        Resource  = local.alerts_topic_arn
+        # SNS topic resource policies accept this explicit topic-action set.
+        # A service-wide wildcard is rejected by SetTopicAttributes.
+        Action = [
+          "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:AddPermission", "sns:RemovePermission",
+          "sns:DeleteTopic", "sns:Subscribe", "sns:ListSubscriptionsByTopic", "sns:Publish",
+        ]
+        Resource = local.alerts_topic_arn
       },
       {
         Sid       = "AllowProjectAlarms"

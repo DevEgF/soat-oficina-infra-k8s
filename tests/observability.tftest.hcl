@@ -99,6 +99,19 @@ run "dashboard_alarm_widget_schema" {
   }
 
   assert {
+    condition = try(
+      toset(jsondecode(aws_sns_topic_policy.alerts.policy).Statement[0].Action) == toset([
+        "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:AddPermission", "sns:RemovePermission",
+        "sns:DeleteTopic", "sns:Subscribe", "sns:ListSubscriptionsByTopic", "sns:Publish",
+      ]) &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[0].Principal.AWS == "arn:aws:iam::111122223333:root" &&
+      jsondecode(aws_sns_topic_policy.alerts.policy).Statement[0].Resource == "arn:aws:sns:us-east-1:111122223333:soat-oficina-alerts",
+      false
+    )
+    error_message = "SNS topic administration must enumerate supported topic-policy actions, scoped to this account and topic; sns:* is rejected by SetTopicAttributes."
+  }
+
+  assert {
     condition = (
       aws_sns_topic.alerts.kms_master_key_id == aws_kms_key.alerts.arn &&
       aws_kms_key.alerts.enable_key_rotation &&
