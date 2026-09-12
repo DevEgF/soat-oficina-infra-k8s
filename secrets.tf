@@ -1,6 +1,6 @@
 ephemeral "random_password" "jwt" {
   length  = 64
-  special = true
+  special = false
 }
 
 resource "aws_secretsmanager_secret" "jwt" {
@@ -15,7 +15,7 @@ resource "aws_secretsmanager_secret" "jwt" {
 resource "aws_secretsmanager_secret_version" "jwt" {
   secret_id                = aws_secretsmanager_secret.jwt.id
   secret_string_wo         = jsonencode({ value = ephemeral.random_password.jwt.result })
-  secret_string_wo_version = 1
+  secret_string_wo_version = 2
 }
 
 locals {
