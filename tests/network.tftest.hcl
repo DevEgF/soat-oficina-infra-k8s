@@ -59,3 +59,30 @@ run "network_contract" {
     error_message = "two private subnets required"
   }
 }
+
+run "http_api_link_ingress" {
+  command = plan
+  override_resource {
+    target          = aws_security_group.nlb
+    override_during = plan
+    values          = { id = "sg-11111111" }
+  }
+  override_resource {
+    target          = aws_security_group.lambda
+    override_during = plan
+    values          = { id = "sg-22222222" }
+  }
+  variables {
+    github_owner = "example-owner"
+    alert_email  = "owner@example.com"
+  }
+  assert {
+    condition = alltrue([for stage, rule in aws_vpc_security_group_ingress_rule.nlb_from_vpc_link :
+      rule.security_group_id == aws_security_group.nlb.id &&
+      rule.referenced_security_group_id == aws_security_group.lambda.id &&
+      rule.from_port == local.routing[stage].listener && rule.to_port == rule.from_port &&
+      rule.ip_protocol == "tcp"
+    ]) && length(aws_vpc_security_group_ingress_rule.nlb_from_vpc_link) == 2
+    error_message = "HTTP API VPC link traffic must reach only the two NLB listeners through its existing security group."
+  }
+}
