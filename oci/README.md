@@ -1,5 +1,9 @@
 # Bootstrap OCI K3s
 
+## Decisão e estado atual
+
+O [README principal](../README.md) reúne as RFCs, a justificativa de custo para encerrar AWS e continuar na Oracle, a escolha do Neon e as evidências de aceite. VM em Ashburn, Oracle Linux 9.8 ARM64, 2 OCPUs e 12 GB; K3s de nó único, não OKE. HTTPS público foi configurado posteriormente no repositório app com Traefik, cert-manager e Let’s Encrypt. As portas 80/443 foram liberadas na security list OCI separadamente destes scripts. Dashboards e alertas New Relic estão nos links do README principal; vídeo concluído conforme o responsável.
+
 Alternative execution target on the existing Oracle Linux 9.8 ARM64 VM. Existing
 AWS Terraform/workflows are untouched. Do not run Terraform apply for this task.
 
