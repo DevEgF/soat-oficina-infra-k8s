@@ -6,7 +6,7 @@
 
 **Hoje: Oracle Cloud (VM + K3s) + Neon PostgreSQL + New Relic.** A implementação AWS permanece como histórico técnico; ela não é o ambiente ativo. A mudança preservou a engine do banco, os contratos da API e a lógica de negócio. Em troca do menor custo operacional pretendido, assumimos a manutenção de um cluster de nó único e a dependência de serviços em provedores diferentes.
 
-Esta página da `main` apresenta a documentação atualizada. O código da adaptação OCI e seus scripts estão na [branch develop](https://github.com/DevEgF/soat-oficina-infra-k8s/tree/develop); os diretórios AWS preservados na main não representam um novo deploy. Esta atualização altera apenas documentação.
+Este README descreve a operação atual em OCI e preserva os procedimentos AWS como histórico. A integração entre `develop` e `main` mantém a documentação e o código versionados; um merge não comprova nem executa um novo deploy OCI. Os workflows de deploy AWS permanecem desabilitados.
 
 ## Implantação atual e decisões da solução
 
@@ -79,7 +79,7 @@ the same 2 vCPU and 4 GiB capacity while consuming account credits.
 The canonical cross-repository contract is maintained in
 [`soat-oficina-app/docs/architecture/integration-contracts.md`](https://github.com/DevEgF/soat-oficina-app/blob/develop/docs/architecture/integration-contracts.md).
 
-For the active OCI target, see [bootstrap and operations](https://github.com/DevEgF/soat-oficina-infra-k8s/blob/develop/oci/README.md). All AWS apply/destroy commands below are historical operating procedures, not commands to run against the closed account. Cost estimates below belong to the recorded AWS plan and are not current price quotations.
+For the active OCI target, see [bootstrap and operations](oci/README.md). All AWS apply/destroy commands below are historical operating procedures, not commands to run against the closed account. Cost estimates below belong to the recorded AWS plan and are not current price quotations.
 
 ## Remote state bootstrap
 
@@ -179,7 +179,7 @@ kubectl get nodes
 kubectl get pods -A
 ```
 
-See [architecture](https://github.com/DevEgF/soat-oficina-infra-k8s/blob/develop/docs/architecture.md) and the [operations runbook](https://github.com/DevEgF/soat-oficina-infra-k8s/blob/develop/docs/runbook.md)
+See [architecture](docs/architecture.md) and the [operations runbook](docs/runbook.md)
 for boundaries, initial setup, routine deployments, and teardown sequencing.
 
 ## GitHub OIDC subject identifiers
