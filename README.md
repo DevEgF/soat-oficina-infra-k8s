@@ -1,7 +1,5 @@
 # soat-oficina-infra-k8s
 
-> **Ambiente AWS encerrado após a demonstração para evitar custos recorrentes.** A implantação e os testes foram executados; os workflows AWS estão desabilitados e o CI permanece ativo. Consulte o [registro de execução, evidências e limites da remoção](docs/delivery/encerramento-aws.md). Não há endpoint AWS ativo anunciado.
-
 Shared AWS foundation for FIAP SOAT Phase 3: a two-AZ VPC, EKS, immutable ECR,
 EKS Pod Identity, one internal NLB, GitHub OIDC roles, observability, and cost
 guardrails for the `hml` and `prod` namespaces.
