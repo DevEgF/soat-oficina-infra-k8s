@@ -1,5 +1,13 @@
 # soat-oficina-infra-k8s
 
+## Por que trocamos AWS por Oracle?
+
+**A troca foi motivada por custo e continuidade da aplicação.** Depois da demonstração na AWS, a conta foi encerrada para evitar custos recorrentes de EKS, máquinas, RDS e rede. Aproveitamos a VM Oracle já disponível, com 2 OCPUs e 12 GB, para manter a API acessível usando K3s. O PostgreSQL foi mantido no Neon para não disputar os recursos dessa VM com a aplicação, e a observabilidade ficou no New Relic.
+
+**Hoje: Oracle Cloud (VM + K3s) + Neon PostgreSQL + New Relic.** A implementação AWS permanece como histórico técnico; ela não é o ambiente ativo. A mudança preservou a engine do banco, os contratos da API e a lógica de negócio. Em troca do menor custo operacional pretendido, assumimos a manutenção de um cluster de nó único e a dependência de serviços em provedores diferentes.
+
+Este README descreve a operação atual em OCI e preserva os procedimentos AWS como histórico. A integração entre `develop` e `main` mantém a documentação e o código versionados; um merge não comprova nem executa um novo deploy OCI. Os workflows de deploy AWS permanecem desabilitados.
+
 ## Implantação atual e decisões da solução
 
 Atualizado em 13/09/2026 (horário de São Paulo). A solução opera na **Oracle Cloud Infrastructure (OCI), com K3s e PostgreSQL gerenciado no Neon**. A implementação AWS foi executada na etapa anterior e permanece versionada para rastreabilidade. A conta AWS foi encerrada pelo responsável para evitar custos recorrentes; os workflows de deploy AWS permanecem desabilitados. CI de qualidade não é sinônimo de deploy habilitado.
@@ -52,6 +60,9 @@ Os ambientes compartilham o proprietário do banco: schemas oferecem separação
 - **Vídeo: gravado com todos os requisitos, conforme confirmação do responsável.** [Assistir à demonstração](https://drive.google.com/file/d/1OGqlACabTZnHzdbG0k2q0ttf29OQkWOF/view?usp=sharing). O link foi fornecido pelo responsável; esta atualização não afirma revisão independente do conteúdo nem da duração.
 
 As evidências descrevem o ensaio realizado, não uma garantia de disponibilidade contínua. Não foi comprovada entrega de notificações por e-mail/Slack. A instalação OCI não inclui publicação do frontend, registry remoto ou pipeline completa de promoção OCI. Essas diferenças técnicas permanecem explícitas mesmo com o vídeo concluído.
+
+<details>
+<summary>Histórico AWS: arquitetura anterior e procedimentos de referência</summary>
 
 ## Arquitetura AWS preservada e verificações locais
 
@@ -189,3 +200,5 @@ The CloudWatch add-on overrides only `application-log.conf`. It tails hml/prod c
 `python scripts/test-log-transport.py` requires Docker, Python and OpenSSL. It runs the pinned official AWS Fluent Bit image against a temporary local HTTPS receiver with synthetic events and credentials. It verifies actual PutLogEvents payloads, split CRI reconstruction, both environment destinations and namespace exclusion without contacting AWS. Terraform tests verify the add-on override; CI runs both checks.
 
 References: [AWS add-on configuration](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) and [Fluent Bit CloudWatch output](https://docs.fluentbit.io/manual/data-pipeline/outputs/cloudwatch).
+
+</details>
