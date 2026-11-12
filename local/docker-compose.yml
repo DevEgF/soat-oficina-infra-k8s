@@ -1,0 +1,63 @@
+# Dependências para desenvolver fora do cluster (./gradlew bootRun).
+# Portas publicadas só em 127.0.0.1. Credenciais locais: oficina/oficina.
+name: oficina-local
+
+services:
+  rabbitmq:
+    image: rabbitmq:4.2.9-management-alpine
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: oficina
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-oficina}
+      RABBITMQ_DEFAULT_VHOST: /
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  postgres-os:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: os
+      POSTGRES_USER: os
+      POSTGRES_PASSWORD: ${OS_DB_PASSWORD:-oficina}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U os -d os"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  postgres-billing:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:5434:5432"
+    environment:
+      POSTGRES_DB: billing
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: ${BILLING_DB_PASSWORD:-oficina}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing -d billing"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mongo:
+    image: mongo:8.0
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: execution
+      MONGO_INITDB_ROOT_PASSWORD: ${EXECUTION_DB_PASSWORD:-oficina}
+      MONGO_INITDB_DATABASE: execution
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
