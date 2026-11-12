@@ -56,6 +56,7 @@ sha256_of() {
 }
 
 # Baixa o pacote do runner uma vez e confere o SHA-256 publicado na release.
+# A saída padrão é só o caminho do pacote (quem chama captura); avisos vão para stderr.
 download_runner() {
   local plat file url expected actual
   plat="$(platform)"
@@ -63,7 +64,7 @@ download_runner() {
   mkdir -p "$RUNNERS_HOME/cache"
   if [ ! -f "$RUNNERS_HOME/cache/$file" ]; then
     url="https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/${file}"
-    log "baixando $file"
+    log "baixando $file" >&2
     curl -fsSL "$url" -o "$RUNNERS_HOME/cache/$file.part"
     mv "$RUNNERS_HOME/cache/$file.part" "$RUNNERS_HOME/cache/$file"
   fi
