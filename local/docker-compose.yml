@@ -1,5 +1,6 @@
 # Dependências para desenvolver fora do cluster (./gradlew bootRun).
-# Portas publicadas só em 127.0.0.1. Credenciais locais: oficina/oficina.
+# Portas publicadas só em 127.0.0.1. As senhas vêm do arquivo de ambiente
+# (--env-file), o mesmo .env.local usado por local/secrets.sh; veja o README.
 name: oficina-local
 
 services:
@@ -10,7 +11,7 @@ services:
       - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: oficina
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-oficina}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
@@ -26,7 +27,7 @@ services:
     environment:
       POSTGRES_DB: os
       POSTGRES_USER: os
-      POSTGRES_PASSWORD: ${OS_DB_PASSWORD:-oficina}
+      POSTGRES_PASSWORD: ${OS_DB_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U os -d os"]
       interval: 5s
@@ -40,7 +41,7 @@ services:
     environment:
       POSTGRES_DB: billing
       POSTGRES_USER: billing
-      POSTGRES_PASSWORD: ${BILLING_DB_PASSWORD:-oficina}
+      POSTGRES_PASSWORD: ${BILLING_DB_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U billing -d billing"]
       interval: 5s
@@ -53,7 +54,7 @@ services:
       - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: execution
-      MONGO_INITDB_ROOT_PASSWORD: ${EXECUTION_DB_PASSWORD:-oficina}
+      MONGO_INITDB_ROOT_PASSWORD: ${EXECUTION_DB_PASSWORD}
       MONGO_INITDB_DATABASE: execution
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]

@@ -21,8 +21,9 @@ local/up.sh      # cria o cluster (se não existir), aplica Secrets e RabbitMQ, 
 local/down.sh    # apaga o cluster
 local/secrets.sh # só recria/atualiza os Secrets (idempotente)
 
-docker compose -f local/docker-compose.yml up -d --wait   # dependências fora do cluster
-docker compose -f local/docker-compose.yml down -v
+# dependências fora do cluster (as senhas vêm do arquivo de ambiente)
+docker compose --env-file ../.env.local -f local/docker-compose.yml up -d --wait
+docker compose --env-file ../.env.local -f local/docker-compose.yml down -v
 ```
 
 Todos os comandos `kubectl` usam `--context kind-oficina`; o contexto corrente
@@ -38,9 +39,10 @@ da sua máquina não importa.
 | 5433 / 5434 | PostgreSQL `os` / `billing` no compose |
 | 27017 | MongoDB `execution` no compose |
 
-Dentro do cluster o AMQP é `rabbitmq.oficina.svc:5672`. Usuário/senha do compose:
-`oficina`/`oficina` (RabbitMQ), e `os`, `billing`, `execution` com a senha
-`oficina`, sobrescrevível pelas variáveis `*_PASSWORD` do `.env.example`.
+Dentro do cluster o AMQP é `rabbitmq.oficina.svc:5672`. No compose, os usuários são
+`oficina` (RabbitMQ), `os`, `billing` e `execution`; as senhas são as variáveis
+`*_PASSWORD` do arquivo de ambiente (veja `.env.example`). O compose não tem senha
+padrão: sem `--env-file` os contêineres não sobem.
 
 ## Contrato dos Secrets (namespace `oficina`)
 
