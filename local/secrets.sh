@@ -60,6 +60,22 @@ MP_TOKEN="$(get_value MERCADOPAGO_ACCESS_TOKEN)"
 [ -n "$NEW_RELIC_KEY" ] || echo "AVISO: NEW_RELIC_LICENSE_KEY vazio; o agente New Relic ficará desligado." >&2
 [ -n "$MP_TOKEN" ] || echo "AVISO: MERCADOPAGO_ACCESS_TOKEN vazio; o Billing Service não conseguirá cobrar de verdade." >&2
 
+# Mercado Pago em modo de teste: public key e o cartão de teste do painel da aplicação.
+# O Billing gera o token do cartão a partir deles; vazios só servem com o pagamento simulado.
+MP_PUBLIC_KEY="$(get_value MERCADOPAGO_PUBLIC_KEY)"
+MP_CARD_NUMBER="$(get_value MERCADOPAGO_TEST_CARD_NUMBER)"
+MP_CARD_SECURITY_CODE="$(get_value MERCADOPAGO_TEST_CARD_SECURITY_CODE)"
+MP_CARD_EXPIRATION_MONTH="$(get_value MERCADOPAGO_TEST_CARD_EXPIRATION_MONTH)"
+MP_CARD_EXPIRATION_YEAR="$(get_value MERCADOPAGO_TEST_CARD_EXPIRATION_YEAR)"
+MP_CARD_HOLDER_DOCUMENT="$(get_value MERCADOPAGO_TEST_CARD_HOLDER_DOCUMENT)"
+for v in "$MP_PUBLIC_KEY" "$MP_CARD_NUMBER" "$MP_CARD_SECURITY_CODE" \
+         "$MP_CARD_EXPIRATION_MONTH" "$MP_CARD_EXPIRATION_YEAR" "$MP_CARD_HOLDER_DOCUMENT"; do
+  if [ -z "$v" ]; then
+    echo "AVISO: MERCADOPAGO_PUBLIC_KEY ou MERCADOPAGO_TEST_CARD_* vazio; o Billing Service só sobe com o pagamento simulado." >&2
+    break
+  fi
+done
+
 RABBITMQ_PASSWORD="$(get_value RABBITMQ_PASSWORD oficina)"
 OS_DB_PASSWORD="$(get_value OS_DB_PASSWORD oficina)"
 BILLING_DB_PASSWORD="$(get_value BILLING_DB_PASSWORD oficina)"
@@ -81,7 +97,9 @@ done
 # Valores com quebra de linha não cabem em --from-env-file.
 for v in "$JWT_SECRET" "$NEW_RELIC_KEY" "$MP_TOKEN" "$RABBITMQ_PASSWORD" \
          "$OS_DB_PASSWORD" "$BILLING_DB_PASSWORD" "$EXECUTION_DB_PASSWORD" \
-         "$STAFF_ADMIN_PASSWORD" "$STAFF_ATTENDANT_PASSWORD" "$STAFF_TECHNICIAN_PASSWORD"; do
+         "$STAFF_ADMIN_PASSWORD" "$STAFF_ATTENDANT_PASSWORD" "$STAFF_TECHNICIAN_PASSWORD" \
+         "$MP_PUBLIC_KEY" "$MP_CARD_NUMBER" "$MP_CARD_SECURITY_CODE" \
+         "$MP_CARD_EXPIRATION_MONTH" "$MP_CARD_EXPIRATION_YEAR" "$MP_CARD_HOLDER_DOCUMENT"; do
   case "$v" in
     *$'\n'*) echo "ERRO: valores com quebra de linha não são suportados." >&2; exit 1 ;;
   esac
@@ -125,6 +143,12 @@ apply_secret os-service-secrets "$TMP_DIR/os"
   printf 'SPRING_RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
   printf 'NEW_RELIC_LICENSE_KEY=%s\n' "$NEW_RELIC_KEY"
   printf 'MERCADOPAGO_ACCESS_TOKEN=%s\n' "$MP_TOKEN"
+  printf 'MERCADOPAGO_PUBLIC_KEY=%s\n' "$MP_PUBLIC_KEY"
+  printf 'MERCADOPAGO_TEST_CARD_NUMBER=%s\n' "$MP_CARD_NUMBER"
+  printf 'MERCADOPAGO_TEST_CARD_SECURITY_CODE=%s\n' "$MP_CARD_SECURITY_CODE"
+  printf 'MERCADOPAGO_TEST_CARD_EXPIRATION_MONTH=%s\n' "$MP_CARD_EXPIRATION_MONTH"
+  printf 'MERCADOPAGO_TEST_CARD_EXPIRATION_YEAR=%s\n' "$MP_CARD_EXPIRATION_YEAR"
+  printf 'MERCADOPAGO_TEST_CARD_HOLDER_DOCUMENT=%s\n' "$MP_CARD_HOLDER_DOCUMENT"
 } > "$TMP_DIR/billing"
 apply_secret billing-service-secrets "$TMP_DIR/billing"
 
