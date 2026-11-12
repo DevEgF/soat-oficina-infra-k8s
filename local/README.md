@@ -12,7 +12,9 @@ Docker em execução (recomendado 8 GB), `kind`, `kubectl` e `curl`. Scripts em 
 
 Arquivo de ambiente: `.env.local` na pasta que contém os repositórios
 (`<repo>/../.env.local`), ou outro caminho em `OFICINA_ENV_FILE`. Use
-`.env.example` como modelo. `APP_JWT_SECRET` é obrigatório (`openssl rand -hex 32`).
+`.env.example` como modelo. São obrigatórios `APP_JWT_SECRET` (`openssl rand -hex 32`)
+e as três senhas de staff do OS Service, `STAFF_ADMIN_PASSWORD`,
+`STAFF_ATTENDANT_PASSWORD` e `STAFF_TECHNICIAN_PASSWORD` (`openssl rand -hex 12` cada).
 
 ## Comandos
 
@@ -49,7 +51,7 @@ padrão: sem `--env-file` os contêineres não sobem.
 | Secret | Chaves |
 |---|---|
 | `rabbitmq-credentials` | `username`, `password` |
-| `os-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY` |
+| `os-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY`, `APP_SECURITY_ADMIN_PASSWORD`, `APP_SECURITY_ATTENDANT_PASSWORD`, `APP_SECURITY_TECHNICIAN_PASSWORD` |
 | `billing-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY`, `MERCADOPAGO_ACCESS_TOKEN` |
 | `execution-service-secrets` | `APP_JWT_SECRET`, `MONGODB_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY` |
 

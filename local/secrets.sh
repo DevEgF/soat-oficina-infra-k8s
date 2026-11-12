@@ -65,9 +65,23 @@ OS_DB_PASSWORD="$(get_value OS_DB_PASSWORD oficina)"
 BILLING_DB_PASSWORD="$(get_value BILLING_DB_PASSWORD oficina)"
 EXECUTION_DB_PASSWORD="$(get_value EXECUTION_DB_PASSWORD oficina)"
 
+# Senhas dos usuários de staff do OS Service (admin, atendente, tecnico). Sem padrão:
+# fora dos perfis local/test o serviço recusa senha vazia ou igual ao nome do usuário.
+STAFF_ADMIN_PASSWORD="$(get_value STAFF_ADMIN_PASSWORD)"
+STAFF_ATTENDANT_PASSWORD="$(get_value STAFF_ATTENDANT_PASSWORD)"
+STAFF_TECHNICIAN_PASSWORD="$(get_value STAFF_TECHNICIAN_PASSWORD)"
+for key in STAFF_ADMIN_PASSWORD STAFF_ATTENDANT_PASSWORD STAFF_TECHNICIAN_PASSWORD; do
+  if [ -z "${!key}" ]; then
+    echo "ERRO: $key é obrigatório e está ausente ou vazio em $ENV_FILE." >&2
+    echo "      Gere um com: openssl rand -hex 12" >&2
+    exit 1
+  fi
+done
+
 # Valores com quebra de linha não cabem em --from-env-file.
 for v in "$JWT_SECRET" "$NEW_RELIC_KEY" "$MP_TOKEN" "$RABBITMQ_PASSWORD" \
-         "$OS_DB_PASSWORD" "$BILLING_DB_PASSWORD" "$EXECUTION_DB_PASSWORD"; do
+         "$OS_DB_PASSWORD" "$BILLING_DB_PASSWORD" "$EXECUTION_DB_PASSWORD" \
+         "$STAFF_ADMIN_PASSWORD" "$STAFF_ATTENDANT_PASSWORD" "$STAFF_TECHNICIAN_PASSWORD"; do
   case "$v" in
     *$'\n'*) echo "ERRO: valores com quebra de linha não são suportados." >&2; exit 1 ;;
   esac
@@ -99,6 +113,9 @@ apply_secret rabbitmq-credentials "$TMP_DIR/rabbitmq"
   printf 'SPRING_DATASOURCE_PASSWORD=%s\n' "$OS_DB_PASSWORD"
   printf 'SPRING_RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
   printf 'NEW_RELIC_LICENSE_KEY=%s\n' "$NEW_RELIC_KEY"
+  printf 'APP_SECURITY_ADMIN_PASSWORD=%s\n' "$STAFF_ADMIN_PASSWORD"
+  printf 'APP_SECURITY_ATTENDANT_PASSWORD=%s\n' "$STAFF_ATTENDANT_PASSWORD"
+  printf 'APP_SECURITY_TECHNICIAN_PASSWORD=%s\n' "$STAFF_TECHNICIAN_PASSWORD"
 } > "$TMP_DIR/os"
 apply_secret os-service-secrets "$TMP_DIR/os"
 
