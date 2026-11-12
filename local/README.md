@@ -52,10 +52,11 @@ padrão: sem `--env-file` os contêineres não sobem.
 |---|---|
 | `rabbitmq-credentials` | `username`, `password` |
 | `os-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY`, `APP_SECURITY_ADMIN_PASSWORD`, `APP_SECURITY_ATTENDANT_PASSWORD`, `APP_SECURITY_TECHNICIAN_PASSWORD` |
-| `billing-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY`, `MERCADOPAGO_ACCESS_TOKEN` |
+| `billing-service-secrets` | `APP_JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY`, `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_PUBLIC_KEY`, `MERCADOPAGO_TEST_CARD_NUMBER`, `MERCADOPAGO_TEST_CARD_SECURITY_CODE`, `MERCADOPAGO_TEST_CARD_EXPIRATION_MONTH`, `MERCADOPAGO_TEST_CARD_EXPIRATION_YEAR`, `MERCADOPAGO_TEST_CARD_HOLDER_DOCUMENT` |
 | `execution-service-secrets` | `APP_JWT_SECRET`, `MONGODB_PASSWORD`, `SPRING_RABBITMQ_PASSWORD`, `NEW_RELIC_LICENSE_KEY` |
 
-`NEW_RELIC_LICENSE_KEY` e `MERCADOPAGO_ACCESS_TOKEN` podem ficar vazios (com aviso).
+`NEW_RELIC_LICENSE_KEY` e as chaves `MERCADOPAGO_*` podem ficar vazias (com aviso); sem as
+do Mercado Pago o Billing Service só sobe com o pagamento simulado.
 Os valores nunca vão para arquivo versionado nem para a saída do terminal.
 Se mudar `RABBITMQ_PASSWORD` com o cluster no ar, reinicie o RabbitMQ:
 `kubectl --context kind-oficina -n oficina rollout restart deployment/rabbitmq`.
