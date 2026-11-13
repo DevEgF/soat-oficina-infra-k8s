@@ -20,6 +20,11 @@ nodes:
         hostPort: 30083
         listenAddress: "127.0.0.1"
         protocol: TCP
+      # Serviço de autenticação de clientes
+      - containerPort: 30084
+        hostPort: 30084
+        listenAddress: "127.0.0.1"
+        protocol: TCP
       # Painel de management do RabbitMQ
       - containerPort: 31672
         hostPort: 31672
