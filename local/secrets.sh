@@ -159,3 +159,10 @@ apply_secret billing-service-secrets "$TMP_DIR/billing"
   printf 'NEW_RELIC_LICENSE_KEY=%s\n' "$NEW_RELIC_KEY"
 } > "$TMP_DIR/execution"
 apply_secret execution-service-secrets "$TMP_DIR/execution"
+
+# Serviço de autenticação de clientes: assina o token do cliente e o token interno com que
+# consulta o OS Service, com o mesmo segredo dos demais serviços.
+{
+  printf 'APP_JWT_SECRET=%s\n' "$JWT_SECRET"
+} > "$TMP_DIR/auth"
+apply_secret auth-service-secrets "$TMP_DIR/auth"
