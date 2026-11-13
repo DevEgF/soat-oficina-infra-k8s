@@ -12,7 +12,7 @@
       "description": "Logins de staff no OS Service. Rode antes das outras pastas.",
       "item": [
         {
-          "id": "c59d39c8-d7ea-56c7-b70b-ced89f7083e9",
+          "id": "17a8dde0-6561-5c87-99e1-e8ca0cd0ad3b",
           "name": "Login do atendente",
           "request": {
             "method": "POST",
@@ -50,7 +50,7 @@
           ]
         },
         {
-          "id": "c5f6a036-634a-51ff-8a57-cc78d65477de",
+          "id": "4f4493d4-a89f-56db-a155-6d384a353d9f",
           "name": "Login do técnico",
           "request": {
             "method": "POST",
@@ -88,7 +88,7 @@
           ]
         },
         {
-          "id": "33a5208b-7f69-5ac2-89cc-b6c4c4fe2029",
+          "id": "08498ec2-d0f6-5be1-a891-70664d033629",
           "name": "Catálogo de serviços",
           "request": {
             "method": "GET",
@@ -118,7 +118,7 @@
           ]
         },
         {
-          "id": "3966997b-5978-5457-84b0-b600c8c6ccb0",
+          "id": "227ba07a-9fd5-5bc0-a1a9-59d71d57711d",
           "name": "Catálogo de peças",
           "request": {
             "method": "GET",
@@ -155,7 +155,7 @@
       "description": "OS aberta, orçada, aprovada pelo cliente, paga, executada e entregue.",
       "item": [
         {
-          "id": "18eaa1b6-2aaa-5b06-aa6a-af342739d7c2",
+          "id": "2fb8eefb-e7a4-5537-9a6b-01c9243c0fff",
           "name": "Abrir OS",
           "request": {
             "method": "POST",
@@ -203,7 +203,7 @@
           ]
         },
         {
-          "id": "2d97543b-92fc-5849-aadb-94e58aa3d857",
+          "id": "a3e9f6fa-e316-5f1d-b730-f5e270723e99",
           "name": "Aguardar orçamento",
           "request": {
             "method": "GET",
@@ -235,7 +235,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -247,7 +247,7 @@
           ]
         },
         {
-          "id": "bcd8a189-5634-5fcd-8bb1-5684adf67918",
+          "id": "c77c660b-d2ce-5d03-9f79-99e1e148df19",
           "name": "Consultar orçamento",
           "request": {
             "method": "GET",
@@ -280,7 +280,7 @@
           ]
         },
         {
-          "id": "a4375d1f-b796-5c8e-98ab-4d82c1f1de4d",
+          "id": "56d6a0f3-f5e2-5cc6-8940-32c502925b7b",
           "name": "Cliente obtém token pelo CPF",
           "request": {
             "method": "POST",
@@ -319,7 +319,7 @@
           ]
         },
         {
-          "id": "f0c8047b-14bd-595d-b863-d8a7f2c116d3",
+          "id": "0d491a31-a9f4-5dd5-90dd-cf04cd2bde35",
           "name": "Cliente aprova o orçamento (titular APRO)",
           "request": {
             "method": "POST",
@@ -367,7 +367,7 @@
           ]
         },
         {
-          "id": "4ec11fef-00a2-55f9-ad37-e5c5762904ef",
+          "id": "37f54c9f-4cbc-5862-9458-801bac43400f",
           "name": "Aguardar pagamento aprovado",
           "request": {
             "method": "GET",
@@ -399,7 +399,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -410,7 +410,7 @@
           ]
         },
         {
-          "id": "836cff67-75fa-5ef7-a8ee-cd5efa5573e5",
+          "id": "c3bbeb0e-e3b4-5670-a54a-99bdf46f1125",
           "name": "Consultar pagamento",
           "request": {
             "method": "GET",
@@ -443,7 +443,7 @@
           ]
         },
         {
-          "id": "8a2b18a4-e6e1-5486-bb4c-3ee4bd4c5826",
+          "id": "3a59d1a8-ca57-52d8-ba44-5435f6182edc",
           "name": "Fila de execução",
           "request": {
             "method": "GET",
@@ -473,7 +473,7 @@
           ]
         },
         {
-          "id": "8aae687f-1370-5bba-9057-ba5e9897b3a9",
+          "id": "51bfd386-c331-5b27-90b6-25c2cf8ddfd5",
           "name": "Iniciar diagnóstico",
           "request": {
             "method": "POST",
@@ -506,7 +506,7 @@
           ]
         },
         {
-          "id": "a2f7b678-de0d-5105-bf65-9e2e56900c64",
+          "id": "d118d6d2-d512-5e9a-811c-5581e14d3b6c",
           "name": "Aguardar OS em diagnóstico",
           "request": {
             "method": "GET",
@@ -538,7 +538,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -549,7 +549,7 @@
           ]
         },
         {
-          "id": "70dc6c7d-ce43-56ea-bb80-231be047f556",
+          "id": "05b5e2b6-d962-571d-a05f-97fe9ab6ac3e",
           "name": "Iniciar reparo",
           "request": {
             "method": "POST",
@@ -582,7 +582,7 @@
           ]
         },
         {
-          "id": "9fef7921-bd00-5566-9c09-f7209ebf50db",
+          "id": "a57b928c-fce8-5d59-9617-47f23a07a81c",
           "name": "Aguardar OS em execução",
           "request": {
             "method": "GET",
@@ -614,7 +614,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -625,7 +625,7 @@
           ]
         },
         {
-          "id": "9b0d09a6-5f8c-5d59-8ede-315268b9ecd7",
+          "id": "4cc52ad0-1084-5d1e-96d3-e061710e3deb",
           "name": "Finalizar",
           "request": {
             "method": "POST",
@@ -658,7 +658,7 @@
           ]
         },
         {
-          "id": "0127c5ed-5a5b-5631-ad68-6ead4ec41146",
+          "id": "b2c3e95b-d141-5617-9a49-f43b9f913815",
           "name": "Aguardar OS finalizada",
           "request": {
             "method": "GET",
@@ -690,7 +690,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -701,7 +701,7 @@
           ]
         },
         {
-          "id": "0667e4c8-42f8-5ebd-a58a-62bd9e37c30b",
+          "id": "05203052-71d7-5035-a7bf-452f5d391fd8",
           "name": "Registrar entrega",
           "request": {
             "method": "POST",
@@ -733,7 +733,7 @@
           ]
         },
         {
-          "id": "12a9d83c-55af-51ea-8546-bbe7f22af2f5",
+          "id": "52a676c0-93d7-5a31-8dbf-53539d60b150",
           "name": "Histórico da OS",
           "request": {
             "method": "GET",
@@ -771,7 +771,7 @@
       "description": "O cliente recusa o orçamento: a OS é cancelada.",
       "item": [
         {
-          "id": "18eaa1b6-2aaa-5b06-aa6a-af342739d7c2",
+          "id": "d01ab7fa-eb30-54fd-92a9-863cc88553c2",
           "name": "Abrir OS",
           "request": {
             "method": "POST",
@@ -819,7 +819,7 @@
           ]
         },
         {
-          "id": "2d97543b-92fc-5849-aadb-94e58aa3d857",
+          "id": "80050509-0403-52e1-b9d9-7635235b8c36",
           "name": "Aguardar orçamento",
           "request": {
             "method": "GET",
@@ -851,7 +851,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -862,7 +862,7 @@
           ]
         },
         {
-          "id": "a4375d1f-b796-5c8e-98ab-4d82c1f1de4d",
+          "id": "fe75ed5a-480d-55c0-b356-a74bf94b6ed2",
           "name": "Cliente obtém token pelo CPF",
           "request": {
             "method": "POST",
@@ -901,7 +901,7 @@
           ]
         },
         {
-          "id": "a6c16413-2a70-54c4-b939-cd1c96ab56cf",
+          "id": "248379ac-1603-560a-9fa3-ccd3e0efff1e",
           "name": "Cliente recusa o orçamento",
           "request": {
             "method": "POST",
@@ -949,7 +949,7 @@
           ]
         },
         {
-          "id": "ee548cf6-ffbe-5dd7-b35d-b075ffe2af90",
+          "id": "f7865523-8c3a-59eb-b34c-a82d073b30cc",
           "name": "Aguardar OS cancelada",
           "request": {
             "method": "GET",
@@ -981,7 +981,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -993,7 +993,7 @@
           ]
         },
         {
-          "id": "f55f5a1e-29b1-502b-9692-999d423582e5",
+          "id": "829dfdc9-769d-53dc-bb2b-307b13464501",
           "name": "Saga compensada",
           "request": {
             "method": "GET",
@@ -1024,7 +1024,7 @@
                   "if (saga.status !== wanted && attempts < 30) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1043,7 +1043,7 @@
       "description": "O Mercado Pago recusa o pagamento (titular OTHE): a OS é cancelada e o orçamento também.",
       "item": [
         {
-          "id": "18eaa1b6-2aaa-5b06-aa6a-af342739d7c2",
+          "id": "edfad83f-8c06-55f2-b0b6-f9344d8d5321",
           "name": "Abrir OS",
           "request": {
             "method": "POST",
@@ -1091,7 +1091,7 @@
           ]
         },
         {
-          "id": "2d97543b-92fc-5849-aadb-94e58aa3d857",
+          "id": "fb4e3d72-9e4d-513b-bb56-6e7e8acc5698",
           "name": "Aguardar orçamento",
           "request": {
             "method": "GET",
@@ -1123,7 +1123,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1134,7 +1134,7 @@
           ]
         },
         {
-          "id": "a4375d1f-b796-5c8e-98ab-4d82c1f1de4d",
+          "id": "065f2c6a-99f4-5803-829b-d5285f291346",
           "name": "Cliente obtém token pelo CPF",
           "request": {
             "method": "POST",
@@ -1173,7 +1173,7 @@
           ]
         },
         {
-          "id": "c45a7126-6fed-5ec9-adc8-5b0df8537151",
+          "id": "faec08c5-6300-50db-b975-70821d325d17",
           "name": "Cliente aprova o orçamento (titular OTHE)",
           "request": {
             "method": "POST",
@@ -1221,7 +1221,7 @@
           ]
         },
         {
-          "id": "ee548cf6-ffbe-5dd7-b35d-b075ffe2af90",
+          "id": "662068e0-897d-5e0a-9cb1-9ba9d65555a6",
           "name": "Aguardar OS cancelada",
           "request": {
             "method": "GET",
@@ -1253,7 +1253,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1265,7 +1265,7 @@
           ]
         },
         {
-          "id": "f55f5a1e-29b1-502b-9692-999d423582e5",
+          "id": "619e11a1-3c6b-571b-bf9e-533d0803d6b8",
           "name": "Saga compensada",
           "request": {
             "method": "GET",
@@ -1296,7 +1296,7 @@
                   "if (saga.status !== wanted && attempts < 30) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1308,7 +1308,7 @@
           ]
         },
         {
-          "id": "ead8b79e-084b-5e7d-b623-92cc7f57e9db",
+          "id": "23ff6b0a-d144-5379-9d59-f16ec71cfeba",
           "name": "Orçamento cancelado",
           "request": {
             "method": "GET",
@@ -1341,7 +1341,7 @@
           ]
         },
         {
-          "id": "7ee2be93-2e3a-5c37-81c2-dff7115cb289",
+          "id": "0bffcdc5-1b8f-58e5-a5ac-cbaa304862aa",
           "name": "Pagamento recusado",
           "request": {
             "method": "GET",
@@ -1374,7 +1374,7 @@
           ]
         },
         {
-          "id": "12a9d83c-55af-51ea-8546-bbe7f22af2f5",
+          "id": "2d569184-50f5-5bd4-9fb8-1a85cd3edf4b",
           "name": "Histórico da OS",
           "request": {
             "method": "GET",
@@ -1412,7 +1412,7 @@
       "description": "A execução falha depois do pagamento: o pagamento é estornado, o orçamento e a OS são cancelados.",
       "item": [
         {
-          "id": "18eaa1b6-2aaa-5b06-aa6a-af342739d7c2",
+          "id": "b127bce2-225f-55a0-af49-3f7ed87c4fe3",
           "name": "Abrir OS",
           "request": {
             "method": "POST",
@@ -1460,7 +1460,7 @@
           ]
         },
         {
-          "id": "2d97543b-92fc-5849-aadb-94e58aa3d857",
+          "id": "6f1bf1c9-e007-52d0-9415-ec3ca058d738",
           "name": "Aguardar orçamento",
           "request": {
             "method": "GET",
@@ -1492,7 +1492,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1503,7 +1503,7 @@
           ]
         },
         {
-          "id": "a4375d1f-b796-5c8e-98ab-4d82c1f1de4d",
+          "id": "6784904a-0ee3-5da2-85b7-633878a37bac",
           "name": "Cliente obtém token pelo CPF",
           "request": {
             "method": "POST",
@@ -1542,7 +1542,7 @@
           ]
         },
         {
-          "id": "f0c8047b-14bd-595d-b863-d8a7f2c116d3",
+          "id": "0a3db34d-d69a-58fa-ae25-bc8d2fee1a59",
           "name": "Cliente aprova o orçamento (titular APRO)",
           "request": {
             "method": "POST",
@@ -1590,7 +1590,7 @@
           ]
         },
         {
-          "id": "4ec11fef-00a2-55f9-ad37-e5c5762904ef",
+          "id": "a7ddb74f-fd2d-5172-94ea-feb1262a75fd",
           "name": "Aguardar pagamento aprovado",
           "request": {
             "method": "GET",
@@ -1622,7 +1622,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1633,7 +1633,7 @@
           ]
         },
         {
-          "id": "8aae687f-1370-5bba-9057-ba5e9897b3a9",
+          "id": "10c97236-3770-5383-9be0-461d20444201",
           "name": "Iniciar diagnóstico",
           "request": {
             "method": "POST",
@@ -1666,7 +1666,7 @@
           ]
         },
         {
-          "id": "195b564f-9f4c-596d-8072-071f2d04778e",
+          "id": "c5357ab1-2e4e-5f81-a622-da9c0017b4ac",
           "name": "Registrar falha na execução",
           "request": {
             "method": "POST",
@@ -1710,7 +1710,7 @@
           ]
         },
         {
-          "id": "ee548cf6-ffbe-5dd7-b35d-b075ffe2af90",
+          "id": "8c10e383-5f7d-5fbb-a2e8-02978f91d60b",
           "name": "Aguardar OS cancelada",
           "request": {
             "method": "GET",
@@ -1742,7 +1742,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1754,7 +1754,7 @@
           ]
         },
         {
-          "id": "3f218ebc-0aa2-55e4-9e9c-6a47514ae86a",
+          "id": "d25b6697-0299-58a3-9d33-31067d755ca1",
           "name": "Saga compensada (estorno e cancelamento confirmados)",
           "request": {
             "method": "GET",
@@ -1785,7 +1785,7 @@
                   "if (saga.status !== wanted && attempts < 30) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1797,7 +1797,7 @@
           ]
         },
         {
-          "id": "fc416213-14e6-53eb-8dd2-aab5b06c244b",
+          "id": "243bc897-752a-5e74-92f7-191d88a842c3",
           "name": "Pagamento estornado",
           "request": {
             "method": "GET",
@@ -1830,7 +1830,7 @@
           ]
         },
         {
-          "id": "ead8b79e-084b-5e7d-b623-92cc7f57e9db",
+          "id": "98c2a43c-d956-5146-9337-0355980531c1",
           "name": "Orçamento cancelado",
           "request": {
             "method": "GET",
@@ -1870,7 +1870,7 @@
       "description": "O Billing não consegue orçar: a OS é cancelada sem nada a desfazer.",
       "item": [
         {
-          "id": "85a8b01d-a294-5d6e-9629-d898952c3c4d",
+          "id": "bb1a9b70-b5f2-5afa-a713-ad419f1374c8",
           "name": "Abrir OS com serviço inexistente",
           "request": {
             "method": "POST",
@@ -1918,7 +1918,7 @@
           ]
         },
         {
-          "id": "ee548cf6-ffbe-5dd7-b35d-b075ffe2af90",
+          "id": "3faa8098-4897-5d20-bd38-f03bd7ee5938",
           "name": "Aguardar OS cancelada",
           "request": {
             "method": "GET",
@@ -1950,7 +1950,7 @@
                   "if (order.status !== wanted && attempts < maxAttempts) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
@@ -1962,7 +1962,7 @@
           ]
         },
         {
-          "id": "f55f5a1e-29b1-502b-9692-999d423582e5",
+          "id": "2dd6466d-fdd2-5fd5-8f25-2e65730a97a5",
           "name": "Saga compensada",
           "request": {
             "method": "GET",
@@ -1993,7 +1993,7 @@
                   "if (saga.status !== wanted && attempts < 30) {",
                   "  pm.collectionVariables.set(key, attempts);",
                   "  setTimeout(() => {}, 2000);",
-                  "  pm.execution.setNextRequest(pm.info.requestName);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
                   "  return;",
                   "}",
                   "pm.collectionVariables.unset(key);",
