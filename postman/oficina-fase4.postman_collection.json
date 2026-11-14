@@ -458,7 +458,8 @@
                   "type": "string"
                 }
               ]
-            }
+            },
+            "description": "Consulta a fila do Execution Service até a OS aparecer. O OS Service marca a OS como `QUEUED` e publica `StartExecution`; a execução entra na fila quando o Execution Service consome o comando."
           },
           "event": [
             {
@@ -466,7 +467,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('OS na fila', () => pm.expect(pm.response.json().map(e => e.workOrderId)).to.include(pm.collectionVariables.get('workOrderId')));"
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const ids = pm.response.json().map(e => e.workOrderId);",
+                  "const id = pm.collectionVariables.get('workOrderId');",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (!ids.includes(id) && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test('OS na fila', () => pm.expect(ids).to.include(id));"
                 ]
               }
             }
@@ -1633,7 +1645,49 @@
           ]
         },
         {
-          "id": "10c97236-3770-5383-9be0-461d20444201",
+          "id": "ae30188c-ee46-53c6-abeb-7dfb5ffc0194",
+          "name": "Aguardar OS na fila de execução",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions?status=QUEUED",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a fila do Execution Service até a OS aparecer. O OS Service marca a OS como `QUEUED` e publica `StartExecution`; a execução entra na fila quando o Execution Service consome o comando."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const ids = pm.response.json().map(e => e.workOrderId);",
+                  "const id = pm.collectionVariables.get('workOrderId');",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (!ids.includes(id) && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test('OS na fila', () => pm.expect(ids).to.include(id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ccfe92ef-ba7c-5442-8713-b68b94fe1753",
           "name": "Iniciar diagnóstico",
           "request": {
             "method": "POST",
@@ -1666,7 +1720,7 @@
           ]
         },
         {
-          "id": "c5357ab1-2e4e-5f81-a622-da9c0017b4ac",
+          "id": "c364adff-f92f-58a5-ad8a-4e3b90ae908b",
           "name": "Registrar falha na execução",
           "request": {
             "method": "POST",
@@ -1710,7 +1764,7 @@
           ]
         },
         {
-          "id": "8c10e383-5f7d-5fbb-a2e8-02978f91d60b",
+          "id": "27ff2165-3f5f-59ce-91c4-ff7c96018cbd",
           "name": "Aguardar OS cancelada",
           "request": {
             "method": "GET",
@@ -1754,7 +1808,7 @@
           ]
         },
         {
-          "id": "d25b6697-0299-58a3-9d33-31067d755ca1",
+          "id": "d0febaa6-7cc3-5213-a7f9-4c852b6def36",
           "name": "Saga compensada (estorno e cancelamento confirmados)",
           "request": {
             "method": "GET",
@@ -1797,7 +1851,7 @@
           ]
         },
         {
-          "id": "243bc897-752a-5e74-92f7-191d88a842c3",
+          "id": "5c4a455c-c428-5be0-a197-db0a8be41b41",
           "name": "Pagamento estornado",
           "request": {
             "method": "GET",
@@ -1830,7 +1884,7 @@
           ]
         },
         {
-          "id": "98c2a43c-d956-5146-9337-0355980531c1",
+          "id": "ff96bee9-0045-558d-86e5-c5e2ae88df10",
           "name": "Orçamento cancelado",
           "request": {
             "method": "GET",
