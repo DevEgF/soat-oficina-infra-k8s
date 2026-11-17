@@ -1,0 +1,2116 @@
+{
+  "info": {
+    "_postman_id": "526cc312-cc36-5864-92ae-2e6df2df50c3",
+    "name": "Oficina — Fase 4 (saga)",
+    "description": "Fluxos da saga entre OS Service, Billing Service e Execution Service, com o serviço de autenticação de clientes. Rode a pasta `0. Autenticação` e depois qualquer outra pasta no Collection Runner: as esperas repetem a consulta até a mensagem assíncrona chegar. As senhas de staff vêm do ambiente `kind`. Swagger de cada serviço em `/swagger-ui.html`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "id": "d135852c-c6bf-5c74-9377-d10b1ec9314f",
+      "name": "0. Autenticação",
+      "description": "Logins de staff no OS Service. Rode antes das outras pastas.",
+      "item": [
+        {
+          "id": "17a8dde0-6561-5c87-99e1-e8ca0cd0ad3b",
+          "name": "Login do atendente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/public/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atendente\",\n  \"password\": \"{{attendantPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login do atendente', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('attendantToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "4f4493d4-a89f-56db-a155-6d384a353d9f",
+          "name": "Login do técnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/public/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"tecnico\",\n  \"password\": \"{{technicianPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login do técnico', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('technicianToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "08498ec2-d0f6-5be1-a891-70664d033629",
+          "name": "Catálogo de serviços",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/catalog/services",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Catálogo com 5 serviços', () => pm.expect(pm.response.json()).to.have.length(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "227ba07a-9fd5-5bc0-a1a9-59d71d57711d",
+          "name": "Catálogo de peças",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/catalog/parts",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Catálogo com 5 peças', () => pm.expect(pm.response.json()).to.have.length(5));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1ef9664e-8948-5cf5-a6d7-7820ec4ebbd8",
+      "name": "1. Caminho feliz",
+      "description": "OS aberta, orçada, aprovada pelo cliente, paga, executada e entregue.",
+      "item": [
+        {
+          "id": "2fb8eefb-e7a4-5537-9a6b-01c9243c0fff",
+          "name": "Abrir OS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/work-orders",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"taxId\": \"{{customerTaxId}}\",\n    \"name\": \"Maria Silva\",\n    \"email\": \"maria@example.com\",\n    \"phone\": \"11999990000\"\n  },\n  \"vehicle\": {\n    \"plate\": \"{{vehiclePlate}}\",\n    \"brand\": \"Fiat\",\n    \"model\": \"Argo\",\n    \"year\": 2022\n  },\n  \"services\": [\n    {\n      \"code\": \"TROCA_OLEO\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"code\": \"FILTRO_OLEO\",\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OS aberta em RECEIVED', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().status).to.eql('RECEIVED');",
+                  "});",
+                  "pm.collectionVariables.set('workOrderId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a3e9f6fa-e316-5f1d-b730-f5e270723e99",
+          "name": "Aguardar orçamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `PENDING_APPROVAL`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'PENDING_APPROVAL';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));",
+                  "pm.test('Total de R$ 210,00', () => pm.expect(order.totalCents).to.eql(21000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c77c660b-d2ce-5d03-9f79-99e1e148df19",
+          "name": "Consultar orçamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('quote: PENDING_APPROVAL', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('PENDING_APPROVAL');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "56d6a0f3-f5e2-5cc6-8940-32c502925b7b",
+          "name": "Cliente obtém token pelo CPF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authUrl}}/auth/token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{customerTaxId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Serviço de autenticação: consulta o cliente no OS Service e emite um JWT de cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token de cliente emitido', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "0d491a31-a9f4-5dd5-90dd-cf04cd2bde35",
+          "name": "Cliente aprova o orçamento (titular APRO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote/decision",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"payment\": {\n    \"cardholderName\": \"APRO\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "No ambiente de teste do Mercado Pago, o nome do titular do cartão define o resultado: `APRO` aprova, `OTHE` recusa, `CONT` deixa pendente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Orçamento APPROVED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('APPROVED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "37f54c9f-4cbc-5862-9458-801bac43400f",
+          "name": "Aguardar pagamento aprovado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `QUEUED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'QUEUED';",
+                  "const maxAttempts = 90;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c3bbeb0e-e3b4-5670-a54a-99bdf46f1125",
+          "name": "Consultar pagamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/payment",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment: APPROVED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('APPROVED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "3a59d1a8-ca57-52d8-ba44-5435f6182edc",
+          "name": "Fila de execução",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions?status=QUEUED",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a fila do Execution Service até a OS aparecer. O OS Service marca a OS como `QUEUED` e publica `StartExecution`; a execução entra na fila quando o Execution Service consome o comando."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const ids = pm.response.json().map(e => e.workOrderId);",
+                  "const id = pm.collectionVariables.get('workOrderId');",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (!ids.includes(id) && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test('OS na fila', () => pm.expect(ids).to.include(id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "51bfd386-c331-5b27-90b6-25c2cf8ddfd5",
+          "name": "Iniciar diagnóstico",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions/{{workOrderId}}/diagnosis/start",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execução em IN_DIAGNOSIS', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('IN_DIAGNOSIS');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "d118d6d2-d512-5e9a-811c-5581e14d3b6c",
+          "name": "Aguardar OS em diagnóstico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `IN_DIAGNOSIS`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'IN_DIAGNOSIS';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "05b5e2b6-d962-571d-a05f-97fe9ab6ac3e",
+          "name": "Iniciar reparo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions/{{workOrderId}}/repair/start",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execução em IN_EXECUTION', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('IN_EXECUTION');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a57b928c-fce8-5d59-9617-47f23a07a81c",
+          "name": "Aguardar OS em execução",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `IN_EXECUTION`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'IN_EXECUTION';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "4cc52ad0-1084-5d1e-96d3-e061710e3deb",
+          "name": "Finalizar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions/{{workOrderId}}/finish",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execução em FINISHED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('FINISHED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "b2c3e95b-d141-5617-9a49-f43b9f913815",
+          "name": "Aguardar OS finalizada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `FINALIZED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'FINALIZED';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "05203052-71d7-5035-a7bf-452f5d391fd8",
+          "name": "Registrar entrega",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}/delivery",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const order = pm.response.json();",
+                  "pm.test('OS entregue', () => pm.expect(order.status).to.eql('DELIVERED'));",
+                  "pm.test('Saga concluída', () => pm.expect(order.saga.status).to.eql('COMPLETED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "52a676c0-93d7-5a31-8dbf-53539d60b150",
+          "name": "Histórico da OS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}/history",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const path = pm.response.json().map(entry => entry.toStatus);",
+                  "pm.test('Histórico: RECEIVED → PENDING_APPROVAL → AWAITING_PAYMENT → QUEUED → IN_DIAGNOSIS → IN_EXECUTION → FINALIZED → DELIVERED', () => pm.expect(path).to.eql([\"RECEIVED\", \"PENDING_APPROVAL\", \"AWAITING_PAYMENT\", \"QUEUED\", \"IN_DIAGNOSIS\", \"IN_EXECUTION\", \"FINALIZED\", \"DELIVERED\"]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "17e55ede-4a4b-5fa7-84d0-9fc2a98d8e58",
+      "name": "2. Orçamento recusado",
+      "description": "O cliente recusa o orçamento: a OS é cancelada.",
+      "item": [
+        {
+          "id": "d01ab7fa-eb30-54fd-92a9-863cc88553c2",
+          "name": "Abrir OS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/work-orders",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"taxId\": \"{{customerTaxId}}\",\n    \"name\": \"Maria Silva\",\n    \"email\": \"maria@example.com\",\n    \"phone\": \"11999990000\"\n  },\n  \"vehicle\": {\n    \"plate\": \"{{vehiclePlate}}\",\n    \"brand\": \"Fiat\",\n    \"model\": \"Argo\",\n    \"year\": 2022\n  },\n  \"services\": [\n    {\n      \"code\": \"TROCA_OLEO\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"code\": \"FILTRO_OLEO\",\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OS aberta em RECEIVED', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().status).to.eql('RECEIVED');",
+                  "});",
+                  "pm.collectionVariables.set('workOrderId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "80050509-0403-52e1-b9d9-7635235b8c36",
+          "name": "Aguardar orçamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `PENDING_APPROVAL`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'PENDING_APPROVAL';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fe75ed5a-480d-55c0-b356-a74bf94b6ed2",
+          "name": "Cliente obtém token pelo CPF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authUrl}}/auth/token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{customerTaxId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Serviço de autenticação: consulta o cliente no OS Service e emite um JWT de cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token de cliente emitido', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "248379ac-1603-560a-9fa3-ccd3e0efff1e",
+          "name": "Cliente recusa o orçamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote/decision",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "No ambiente de teste do Mercado Pago, o nome do titular do cartão define o resultado: `APRO` aprova, `OTHE` recusa, `CONT` deixa pendente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Orçamento REJECTED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('REJECTED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "f7865523-8c3a-59eb-b34c-a82d073b30cc",
+          "name": "Aguardar OS cancelada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `CANCELLED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'CANCELLED';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));",
+                  "pm.test('Motivo do cancelamento: QuoteRejected', () => pm.expect(order.cancellationReason).to.eql('QuoteRejected'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "829dfdc9-769d-53dc-bb2b-307b13464501",
+          "name": "Saga compensada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'COMPENSATED';",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const saga = order.saga || {};",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (saga.status !== wanted && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`Saga ${wanted}`, () => pm.expect(saga.status).to.eql(wanted));",
+                  "pm.test('Sem compensação pendente', () => pm.expect(saga.pendingCompensations || []).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "f480a728-f6c0-5153-8068-5c962d8d9c6e",
+      "name": "3. Pagamento recusado",
+      "description": "O Mercado Pago recusa o pagamento (titular OTHE): a OS é cancelada e o orçamento também.",
+      "item": [
+        {
+          "id": "edfad83f-8c06-55f2-b0b6-f9344d8d5321",
+          "name": "Abrir OS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/work-orders",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"taxId\": \"{{customerTaxId}}\",\n    \"name\": \"Maria Silva\",\n    \"email\": \"maria@example.com\",\n    \"phone\": \"11999990000\"\n  },\n  \"vehicle\": {\n    \"plate\": \"{{vehiclePlate}}\",\n    \"brand\": \"Fiat\",\n    \"model\": \"Argo\",\n    \"year\": 2022\n  },\n  \"services\": [\n    {\n      \"code\": \"TROCA_OLEO\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"code\": \"FILTRO_OLEO\",\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OS aberta em RECEIVED', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().status).to.eql('RECEIVED');",
+                  "});",
+                  "pm.collectionVariables.set('workOrderId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fb4e3d72-9e4d-513b-bb56-6e7e8acc5698",
+          "name": "Aguardar orçamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `PENDING_APPROVAL`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'PENDING_APPROVAL';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "065f2c6a-99f4-5803-829b-d5285f291346",
+          "name": "Cliente obtém token pelo CPF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authUrl}}/auth/token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{customerTaxId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Serviço de autenticação: consulta o cliente no OS Service e emite um JWT de cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token de cliente emitido', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "faec08c5-6300-50db-b975-70821d325d17",
+          "name": "Cliente aprova o orçamento (titular OTHE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote/decision",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"payment\": {\n    \"cardholderName\": \"OTHE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "No ambiente de teste do Mercado Pago, o nome do titular do cartão define o resultado: `APRO` aprova, `OTHE` recusa, `CONT` deixa pendente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Orçamento APPROVED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('APPROVED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "662068e0-897d-5e0a-9cb1-9ba9d65555a6",
+          "name": "Aguardar OS cancelada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `CANCELLED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'CANCELLED';",
+                  "const maxAttempts = 90;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));",
+                  "pm.test('Motivo do cancelamento: PaymentRejected', () => pm.expect(order.cancellationReason).to.eql('PaymentRejected'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "619e11a1-3c6b-571b-bf9e-533d0803d6b8",
+          "name": "Saga compensada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'COMPENSATED';",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const saga = order.saga || {};",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (saga.status !== wanted && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`Saga ${wanted}`, () => pm.expect(saga.status).to.eql(wanted));",
+                  "pm.test('Sem compensação pendente', () => pm.expect(saga.pendingCompensations || []).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "23ff6b0a-d144-5379-9d59-f16ec71cfeba",
+          "name": "Orçamento cancelado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('quote: CANCELLED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "0bffcdc5-1b8f-58e5-a5ac-cbaa304862aa",
+          "name": "Pagamento recusado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/payment",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment: REJECTED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('REJECTED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2d569184-50f5-5bd4-9fb8-1a85cd3edf4b",
+          "name": "Histórico da OS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}/history",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const path = pm.response.json().map(entry => entry.toStatus);",
+                  "pm.test('Histórico: RECEIVED → PENDING_APPROVAL → AWAITING_PAYMENT → CANCELLED', () => pm.expect(path).to.eql([\"RECEIVED\", \"PENDING_APPROVAL\", \"AWAITING_PAYMENT\", \"CANCELLED\"]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "7e930fc5-0cb2-58b6-8e93-5a4df55ed672",
+      "name": "4. Falha na execução",
+      "description": "A execução falha depois do pagamento: o pagamento é estornado, o orçamento e a OS são cancelados.",
+      "item": [
+        {
+          "id": "b127bce2-225f-55a0-af49-3f7ed87c4fe3",
+          "name": "Abrir OS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/work-orders",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"taxId\": \"{{customerTaxId}}\",\n    \"name\": \"Maria Silva\",\n    \"email\": \"maria@example.com\",\n    \"phone\": \"11999990000\"\n  },\n  \"vehicle\": {\n    \"plate\": \"{{vehiclePlate}}\",\n    \"brand\": \"Fiat\",\n    \"model\": \"Argo\",\n    \"year\": 2022\n  },\n  \"services\": [\n    {\n      \"code\": \"TROCA_OLEO\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"code\": \"FILTRO_OLEO\",\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OS aberta em RECEIVED', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().status).to.eql('RECEIVED');",
+                  "});",
+                  "pm.collectionVariables.set('workOrderId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "6f1bf1c9-e007-52d0-9415-ec3ca058d738",
+          "name": "Aguardar orçamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `PENDING_APPROVAL`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'PENDING_APPROVAL';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "6784904a-0ee3-5da2-85b7-633878a37bac",
+          "name": "Cliente obtém token pelo CPF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authUrl}}/auth/token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{customerTaxId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Serviço de autenticação: consulta o cliente no OS Service e emite um JWT de cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token de cliente emitido', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "0a3db34d-d69a-58fa-ae25-bc8d2fee1a59",
+          "name": "Cliente aprova o orçamento (titular APRO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote/decision",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"payment\": {\n    \"cardholderName\": \"APRO\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "No ambiente de teste do Mercado Pago, o nome do titular do cartão define o resultado: `APRO` aprova, `OTHE` recusa, `CONT` deixa pendente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Orçamento APPROVED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('APPROVED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "a7ddb74f-fd2d-5172-94ea-feb1262a75fd",
+          "name": "Aguardar pagamento aprovado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `QUEUED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'QUEUED';",
+                  "const maxAttempts = 90;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ae30188c-ee46-53c6-abeb-7dfb5ffc0194",
+          "name": "Aguardar OS na fila de execução",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions?status=QUEUED",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a fila do Execution Service até a OS aparecer. O OS Service marca a OS como `QUEUED` e publica `StartExecution`; a execução entra na fila quando o Execution Service consome o comando."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const ids = pm.response.json().map(e => e.workOrderId);",
+                  "const id = pm.collectionVariables.get('workOrderId');",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (!ids.includes(id) && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test('OS na fila', () => pm.expect(ids).to.include(id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ccfe92ef-ba7c-5442-8713-b68b94fe1753",
+          "name": "Iniciar diagnóstico",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{executionUrl}}/api/executions/{{workOrderId}}/diagnosis/start",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execução em IN_DIAGNOSIS', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('IN_DIAGNOSIS');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c364adff-f92f-58a5-ad8a-4e3b90ae908b",
+          "name": "Registrar falha na execução",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{executionUrl}}/api/executions/{{workOrderId}}/fail",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Peça incompatível com o veículo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execução em FAILED', () => pm.expect(pm.response.json().status).to.eql('FAILED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "27ff2165-3f5f-59ce-91c4-ff7c96018cbd",
+          "name": "Aguardar OS cancelada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `CANCELLED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'CANCELLED';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));",
+                  "pm.test('Motivo do cancelamento: ExecutionFailed', () => pm.expect(order.cancellationReason).to.eql('ExecutionFailed'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "d0febaa6-7cc3-5213-a7f9-4c852b6def36",
+          "name": "Saga compensada (estorno e cancelamento confirmados)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'COMPENSATED';",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const saga = order.saga || {};",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (saga.status !== wanted && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`Saga ${wanted}`, () => pm.expect(saga.status).to.eql(wanted));",
+                  "pm.test('Sem compensação pendente', () => pm.expect(saga.pendingCompensations || []).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "5c4a455c-c428-5be0-a197-db0a8be41b41",
+          "name": "Pagamento estornado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/payment",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('payment: REFUNDED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('REFUNDED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ff96bee9-0045-558d-86e5-c5e2ae88df10",
+          "name": "Orçamento cancelado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{billingUrl}}/api/work-orders/{{workOrderId}}/quote",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('quote: CANCELLED', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e46969da-e4c6-5f15-a063-76bc634691b6",
+      "name": "5. Item fora do catálogo",
+      "description": "O Billing não consegue orçar: a OS é cancelada sem nada a desfazer.",
+      "item": [
+        {
+          "id": "bb1a9b70-b5f2-5afa-a713-ad419f1374c8",
+          "name": "Abrir OS com serviço inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{osUrl}}/api/work-orders",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"taxId\": \"{{customerTaxId}}\",\n    \"name\": \"Maria Silva\",\n    \"email\": \"maria@example.com\",\n    \"phone\": \"11999990000\"\n  },\n  \"vehicle\": {\n    \"plate\": \"{{vehiclePlate}}\",\n    \"brand\": \"Fiat\",\n    \"model\": \"Argo\",\n    \"year\": 2022\n  },\n  \"services\": [\n    {\n      \"code\": \"SERVICO_INEXISTENTE\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OS aberta em RECEIVED', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().status).to.eql('RECEIVED');",
+                  "});",
+                  "pm.collectionVariables.set('workOrderId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "3faa8098-4897-5d20-bd38-f03bd7ee5938",
+          "name": "Aguardar OS cancelada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Consulta a OS até o status `CANCELLED`. No Collection Runner, repete a cada 2 segundos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'CANCELLED';",
+                  "const maxAttempts = 60;",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (order.status !== wanted && attempts < maxAttempts) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`OS em ${wanted}`, () => pm.expect(order.status).to.eql(wanted));",
+                  "pm.test('Motivo do cancelamento: QuoteGenerationFailed', () => pm.expect(order.cancellationReason).to.eql('QuoteGenerationFailed'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "2dd6466d-fdd2-5fd5-8f25-2e65730a97a5",
+          "name": "Saga compensada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{osUrl}}/api/work-orders/{{workOrderId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{attendantToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const wanted = 'COMPENSATED';",
+                  "const key = 'attempts_' + pm.info.requestId;",
+                  "const order = pm.response.json();",
+                  "const saga = order.saga || {};",
+                  "const attempts = Number(pm.collectionVariables.get(key) || 0) + 1;",
+                  "if (saga.status !== wanted && attempts < 30) {",
+                  "  pm.collectionVariables.set(key, attempts);",
+                  "  setTimeout(() => {}, 2000);",
+                  "  pm.execution.setNextRequest(pm.info.requestId);",
+                  "  return;",
+                  "}",
+                  "pm.collectionVariables.unset(key);",
+                  "pm.test(`Saga ${wanted}`, () => pm.expect(saga.status).to.eql(wanted));",
+                  "pm.test('Sem compensação pendente', () => pm.expect(saga.pendingCompensations || []).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "osUrl",
+      "value": "http://localhost:30081",
+      "type": "string"
+    },
+    {
+      "key": "billingUrl",
+      "value": "http://localhost:30082",
+      "type": "string"
+    },
+    {
+      "key": "executionUrl",
+      "value": "http://localhost:30083",
+      "type": "string"
+    },
+    {
+      "key": "authUrl",
+      "value": "http://localhost:30084",
+      "type": "string"
+    },
+    {
+      "key": "customerTaxId",
+      "value": "52998224725",
+      "type": "string"
+    },
+    {
+      "key": "vehiclePlate",
+      "value": "ABC1D23",
+      "type": "string"
+    },
+    {
+      "key": "workOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attendantToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "technicianToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,5 +1,75 @@
 # soat-oficina-infra-k8s
 
+## Fase 4: microsserviços no cluster kind local
+
+Na Fase 4 o monólito foi dividido em três microsserviços com banco próprio, que se coordenam por uma saga orquestrada sobre RabbitMQ. Todo o ambiente roda na máquina de desenvolvimento: um cluster Kubernetes [kind](https://kind.sigs.k8s.io/) dentro do Docker, sem dependência de nuvem. Este repositório é a plataforma desse ambiente.
+
+```mermaid
+flowchart LR
+  Cliente[Postman] --> AUTH[Auth<br/>:30084]
+  Cliente --> OS[OS Service<br/>:30081]
+  Cliente --> BIL[Billing Service<br/>:30082]
+  Cliente --> EXE[Execution Service<br/>:30083]
+  subgraph kind[Cluster kind - namespace oficina]
+    AUTH -->|REST interno| OS
+    OS <-->|comandos e eventos| MQ{{RabbitMQ}}
+    BIL <--> MQ
+    EXE <--> MQ
+    OS --- PG1[(PostgreSQL OS)]
+    BIL --- PG2[(PostgreSQL Billing)]
+    EXE --- MG[(MongoDB Execution)]
+  end
+  BIL -->|API de Orders| MP[Mercado Pago - teste]
+  OS & BIL & EXE --> NR[New Relic]
+```
+
+| Repositório | Responsabilidade na Fase 4 |
+|---|---|
+| [soat-oficina-os-service](https://github.com/DevEgF/soat-oficina-os-service) | Ordem de serviço, clientes, veículos, histórico, login de staff e orquestração da saga ([justificativa da saga](https://github.com/DevEgF/soat-oficina-os-service/tree/develop#saga)) |
+| [soat-oficina-billing-service](https://github.com/DevEgF/soat-oficina-billing-service) | Catálogo, orçamento, decisão do cliente, pagamento pelo Mercado Pago e estorno |
+| [soat-oficina-execution-service](https://github.com/DevEgF/soat-oficina-execution-service) | Fila de execução, diagnóstico, reparo e finalização (MongoDB) |
+| [soat-oficina-auth](https://github.com/DevEgF/soat-oficina-auth) | Token de cliente por CPF, consultando o OS Service |
+| soat-oficina-infra-k8s (este) | Cluster kind, RabbitMQ, Secrets, compose de desenvolvimento, runners do GitHub Actions, coleção Postman e dashboard do New Relic |
+
+O que este repositório entrega:
+
+- [`local/`](local/README.md): cria e destrói o cluster (`up.sh`, `down.sh`), aplica RabbitMQ e Secrets (`secrets.sh`, a partir do `.env.local` fora do Git), sobe as dependências em `docker compose` para desenvolvimento e registra os runners self-hosted que fazem o deploy (`runners.sh`).
+- [`postman/`](postman/): coleção da Fase 4 com o caminho feliz e os quatro cenários de compensação, e o ambiente `kind` (só os nomes das senhas; os valores ficam fora do Git).
+- [`observability/newrelic/`](observability/newrelic/): dashboard do New Relic com vazão e erro por serviço, duração da saga e sagas compensadas.
+
+### Subir do zero
+
+```bash
+soat-oficina-infra-k8s/local/up.sh
+soat-oficina-os-service/scripts/deploy-kind.sh all
+soat-oficina-billing-service/scripts/deploy-kind.sh all
+soat-oficina-execution-service/scripts/deploy-kind.sh all
+soat-oficina-auth/scripts/deploy-kind.sh all
+```
+
+Cada repositório de serviço também implanta pelo pipeline: depois de um merge na `main`, o workflow `Deploy` roda no runner self-hosted desta máquina (`local/runners.sh start`), faz o rollout no kind e volta a versão anterior se o smoke test falhar.
+
+### Coleção Postman
+
+Importe `postman/oficina-fase4.postman_collection.json` e `postman/kind.postman_environment.json`, preencha as senhas do atendente e do técnico no ambiente e rode, no Collection Runner, a pasta `0. Autenticação` e depois a pasta do cenário. As esperas repetem a consulta da OS até a mensagem assíncrona chegar. As pastas que passam pelo pagamento usam o Mercado Pago em modo de teste: o nome do titular do cartão define o resultado (`APRO` aprova, `OTHE` recusa).
+
+Pela linha de comando, com a imagem oficial do newman na rede do kind:
+
+```bash
+docker run --rm --network kind -v "$PWD/postman:/etc/newman" postman/newman:6-alpine \
+  run oficina-fase4.postman_collection.json -e kind.postman_environment.json \
+  --env-var attendantPassword=... --env-var technicianPassword=... \
+  --env-var osUrl=http://oficina-control-plane:30081 --env-var billingUrl=http://oficina-control-plane:30082 \
+  --env-var executionUrl=http://oficina-control-plane:30083 --env-var authUrl=http://oficina-control-plane:30084 \
+  --folder "0. Autenticação" --folder "1. Caminho feliz"
+```
+
+### Dashboard do New Relic
+
+Em **Dashboards → Import dashboard**, cole o conteúdo de `observability/newrelic/oficina-fase4-dashboard.json`. A página **Serviços** usa as transações do agente Java; a página **Saga** usa os eventos `SagaTransition` e `SagaFinished`, publicados pelo OS Service. O JSON referencia a conta do projeto; para outra conta, troque o valor de `accountIds`.
+
+O restante deste README registra a Fase 3 (AWS e depois OCI), preservada como histórico.
+
 ## Por que trocamos AWS por Oracle?
 
 **A troca foi motivada por custo e continuidade da aplicação.** Depois da demonstração na AWS, a conta foi encerrada para evitar custos recorrentes de EKS, máquinas, RDS e rede. Aproveitamos a VM Oracle já disponível, com 2 OCPUs e 12 GB, para manter a API acessível usando K3s. O PostgreSQL foi mantido no Neon para não disputar os recursos dessa VM com a aplicação, e a observabilidade ficou no New Relic.

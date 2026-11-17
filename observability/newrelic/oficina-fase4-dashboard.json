@@ -1,0 +1,344 @@
+{
+  "name": "Oficina — Fase 4",
+  "description": "Vazão e erro por serviço, duração da saga e sagas compensadas.",
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "Serviços",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Vazão por serviço (requisições e mensagens por minuto)",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT rate(count(*), 1 minute) FROM Transaction WHERE appName IN ('oficina-os-service', 'oficina-billing-service', 'oficina-execution-service') FACET appName TIMESERIES"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Taxa de erro por serviço (%)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT percentage(count(*), WHERE error IS true) FROM Transaction WHERE appName IN ('oficina-os-service', 'oficina-billing-service', 'oficina-execution-service') FACET appName TIMESERIES"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Tempo de resposta HTTP p95 (ms)",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT percentile(duration * 1000, 95) FROM Transaction WHERE appName IN ('oficina-os-service', 'oficina-billing-service', 'oficina-execution-service') AND transactionType = 'Web' FACET appName TIMESERIES"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Mensagens e tarefas processadas",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName IN ('oficina-os-service', 'oficina-billing-service', 'oficina-execution-service') AND transactionType = 'Other' FACET name SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        },
+        {
+          "title": "Erros por classe",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE appName IN ('oficina-os-service', 'oficina-billing-service', 'oficina-execution-service') FACET appName, error.class SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        },
+        {
+          "title": "Logs de erro e alerta por serviço",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM Log WHERE entity.name LIKE 'oficina-%' AND level IN ('ERROR', 'WARN') FACET entity.name, level TIMESERIES"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Saga",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Sagas finalizadas",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM SagaFinished FACET outcome SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Duração da saga (s)",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 8,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) AS 'sagas', average(durationMs / 1000) AS 'média', percentile(durationMs / 1000, 95) AS 'p95', max(durationMs / 1000) AS 'máximo' FROM SagaFinished FACET outcome SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        },
+        {
+          "title": "Sagas compensadas por motivo",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM SagaFinished WHERE outcome = 'COMPENSATED' FACET cancellationReason SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        },
+        {
+          "title": "Sagas finalizadas ao longo do tempo",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM SagaFinished FACET outcome TIMESERIES SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Transições de status da OS",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM SagaTransition FACET toStatus SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        },
+        {
+          "title": "Gatilhos das transições",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8439293
+                ],
+                "query": "SELECT count(*) FROM SagaTransition FACET trigger, toStatus SINCE 1 day ago"
+              }
+            ],
+            "facet": {
+              "showOtherSeries": false
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variables": []
+}
